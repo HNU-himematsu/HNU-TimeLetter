@@ -12,6 +12,28 @@ type OssRequestOptions = {
   contentType?: string;
 };
 
+/**
+ * 根据文件扩展名返回对应的 MIME 类型。
+ * 此映射与 ali-oss SDK 的默认行为保持一致，确保签名与请求头使用相同的值。
+ */
+function getMimeType(fileName: string): string {
+  const ext = path.extname(fileName).toLowerCase();
+  const mimeMap: Record<string, string> = {
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.gif': 'image/gif',
+    '.webp': 'image/webp',
+    '.svg': 'image/svg+xml',
+    '.pdf': 'application/pdf',
+    '.mp4': 'video/mp4',
+    '.mp3': 'audio/mpeg',
+    '.json': 'application/json',
+    '.txt': 'text/plain',
+  };
+  return mimeMap[ext] ?? 'application/octet-stream';
+}
+
 function encodeObjectKey(objectKey: string) {
   return objectKey
     .split('/')
@@ -62,17 +84,21 @@ export class OssClient implements SyncOssService {
 
   private async request({ method, objectKey, body, contentType }: OssRequestOptions) {
     const date = new Date().toUTCString();
-    const headers = new Headers({
-      Date: date,
-      Authorization: this.createAuthorizationHeader(
-        { method, objectKey, body, contentType },
+
+    // 先确定最终使用的 Content-Type（单一来源），再用同一值计算签名，
+    // 保证签名字符串与实际请求头中的 Content-Type 严格一致，避免 403。
+    const effectiveContentType = contentType ?? '';
+    const headers = new Headers({ Date: date });
+    if (effectiveContentType) {
+      headers.set('Content-Type', effectiveContentType);
+    }
+    headers.set(
+      'Authorization',
+      this.createAuthorizationHeader(
+        { method, objectKey, contentType: effectiveContentType },
         date,
       ),
-    });
-
-    if (contentType) {
-      headers.set('Content-Type', contentType);
-    }
+    );
 
     return fetch(this.getEndpointUrl(objectKey), {
       method,
@@ -103,7 +129,7 @@ export class OssClient implements SyncOssService {
           method: 'PUT',
           objectKey: ossPath,
           body: buffer,
-          contentType: 'application/octet-stream',
+          contentType: getMimeType(fileName),
         });
         if (!putResponse.ok) {
           throw new Error(`OSS PUT ${putResponse.status} ${putResponse.statusText}`);
