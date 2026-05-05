@@ -1,6 +1,7 @@
 'use client';
 
 import { motion, useMotionValue, useTransform, PanInfo, animate, MotionValue, useMotionValueEvent, MotionStyle } from 'framer-motion';
+import NextImage from 'next/image';
 import { Story } from '@/lib/types';
 import { memo, useCallback, useEffect, useMemo } from 'react';
 import { getStoryMainImageUrl } from '@/lib/content';
@@ -38,7 +39,7 @@ export function StoryCardStack({ stories, activeIndices, onSwipe, onSelect }: St
     // 预加载故事图片，减少切换到下一张时的解码卡顿
     useEffect(() => {
         stories.forEach((story) => {
-            const img = new Image();
+            const img = new window.Image();
             img.src = getStoryMainImageUrl(story);
         });
     }, [stories]);
@@ -206,12 +207,14 @@ function CardComponent({ story, isTop, offset, storyCount, sharedDragX, zIndex, 
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
         >
             <div className="relative h-full w-auto">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <NextImage
                     src={getStoryMainImageUrl(story)}
                     alt={story.characterName}
+                    width={420}
+                    height={600}
                     className="h-full w-auto object-cover rounded-sm pointer-events-none select-none block"
                     draggable={false}
+                    sizes="40vw"
                 />
 
             </div>

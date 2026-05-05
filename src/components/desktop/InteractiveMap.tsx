@@ -4,12 +4,12 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { MapPin } from 'lucide-react';
-import data from '@/data/content.json';
 import { StoryView } from './StoryView';
 import { QuillSearch } from './QuillSearch';
 import { LocationPoint } from '@/lib/types';
 import { useContainedMapSize } from '@/lib/hooks';
 import { getPrimaryStory, getStoryAvatarUrl } from '@/lib/content';
+import { useContentData } from '@/lib/content-store';
 
 /**
  * InteractiveMap (交互式地图组件) — 重构版
@@ -46,6 +46,7 @@ const MAP_ROLL_TRANSITION = {
 };
 
 export function InteractiveMap() {
+  const data = useContentData();
   // ─── 相位状态机 ────────────────────────────────────────────────────────────
   const [phase, setPhase] = useState<Phase>('idle');
   const phaseRef = useRef<Phase>('idle');
@@ -149,7 +150,7 @@ export function InteractiveMap() {
         }, 900); // 跳动动画约 0.8s
       }
     }
-  }, []);
+  }, [data.locations]);
 
   /**
    * 搜索成功回调：先关闭故事面板，展开地图，然后跳动 Pin。

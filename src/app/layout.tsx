@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { GlobalNav } from "@/components/shared/GlobalNav";
 import { TransitionOverlay } from "@/components/shared/TransitionOverlay";
+import { ContentStoreProvider } from "@/lib/content-store";
 
 const displayFont = localFont({
   src: "../../public/ChillDINGothic_SemiBold.otf",
@@ -39,9 +40,11 @@ export default function RootLayout({
          * 任何需要「视口全屏」的层以 shell 为参照而非浏览器物理边缘。
          */}
         <div className="site-frame-shell">
-          {children}
-          <GlobalNav />
-          <TransitionOverlay />
+          <ContentStoreProvider>
+            {children}
+            <GlobalNav />
+            <TransitionOverlay />
+          </ContentStoreProvider>
         </div>
         {/*
          * 画框描边层 —— 置于视口最顶层，z-index 高于一切全屏遮罩，

@@ -8,19 +8,20 @@
  * 详情页打开时锁定 body 滚动，防止穿透。
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Map as MapIcon } from 'lucide-react';
 import { StoryFeed } from './StoryFeed';
 import { MobileDetailModal } from './MobileDetailModal';
 import { StaticMapModal } from './StaticMapModal';
-import data from '@/data/content.json';
 import type { Story } from '@/lib/types';
 import { flattenStoriesWithLocationName } from '@/lib/content';
+import { useContentData } from '@/lib/content-store';
 
 export function MobileExperience() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isMapOpen, setIsMapOpen] = useState(false);
+  const contentData = useContentData();
 
   // 详情页或地图打开时锁定 body 滚动，防止穿透
   useEffect(() => {
@@ -28,8 +29,11 @@ export function MobileExperience() {
     return () => { document.body.style.overflow = ''; };
   }, [selectedId, isMapOpen]);
 
-  const allStories = useRef(flattenStoriesWithLocationName(data.locations) as Story[]);
-  const currentStory = allStories.current.find(s => s.id === selectedId) ?? null;
+  const allStories = useMemo(
+    () => flattenStoriesWithLocationName(contentData.locations) as Story[],
+    [contentData.locations],
+  );
+  const currentStory = allStories.find(s => s.id === selectedId) ?? null;
 
   return (
     <div className="relative w-full h-[100dvh] bg-background flex flex-col overflow-hidden">

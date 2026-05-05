@@ -2,10 +2,15 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import type {
+  DependencyMode,
+  SyncConfigResponse,
+  SyncJobKind,
+  SyncJobRecord,
+  SyncTableKey,
+} from '@/lib/sync/types';
 
-type JobKind = 'sync-data' | 'sync-data-and-publish';
-type SyncTableKey = 'locations' | 'stories' | 'creation_board';
-type DependencyMode = 'read_local' | 'run_dependencies' | 'strict';
+type JobKind = SyncJobKind;
 
 type TableDefinition = {
   key: SyncTableKey;
@@ -13,54 +18,11 @@ type TableDefinition = {
   dependsOn: SyncTableKey[];
 };
 
-type ConfigResponse = {
-  config: {
-    enabled: boolean;
-    cron: string;
-    defaultTables: SyncTableKey[];
-    defaultJobKind: JobKind;
-    dataPublishMode: string;
-  };
-  runtime: {
-    currentJobId: string | null;
-    lastJobId: string | null;
-    lastRunAt?: string;
-    lastPublishAt?: string;
-    hasPendingPublish: boolean;
-  };
+type ConfigResponse = SyncConfigResponse & {
   availableTables: TableDefinition[];
 };
 
-type JobStep = {
-  step: string;
-  status: string;
-  startedAt?: string;
-  finishedAt?: string;
-  summary?: Record<string, unknown>;
-  warnings?: string[];
-  errors?: string[];
-};
-
-type Job = {
-  jobId: string;
-  kind: JobKind;
-  status: string;
-  publishStatus?: string;
-  createdAt: string;
-  startedAt?: string;
-  syncedAt?: string;
-  publishedAt?: string;
-  finishedAt?: string;
-  tables: SyncTableKey[];
-  effectiveTables: SyncTableKey[];
-  dependencyMode: DependencyMode;
-  includeAssets: boolean;
-  continueOnTableError: boolean;
-  summary?: Record<string, unknown>;
-  steps: JobStep[];
-  warnings: string[];
-  errors: string[];
-};
+type Job = SyncJobRecord;
 
 type ConfigFormState = {
   enabled: boolean;

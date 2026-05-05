@@ -3,58 +3,47 @@
  */
 
 import { config } from 'dotenv';
-import OSS from 'ali-oss';
 import * as crypto from 'crypto';
+import { OssClient } from '@/lib/sync/clients/oss-client';
+import type { SyncEnvironmentSettings } from '@/lib/sync/types';
 
 config({ path: '.env.local' });
 
-const OSS_REGION = process.env.ALIYUN_OSS_REGION;
-const OSS_BUCKET = process.env.ALIYUN_OSS_BUCKET;
-const OSS_ACCESS_KEY_ID = process.env.ALIYUN_OSS_ACCESS_KEY_ID;
-const OSS_ACCESS_KEY_SECRET = process.env.ALIYUN_OSS_ACCESS_KEY_SECRET;
+const settings: SyncEnvironmentSettings = {
+  ossRegion: process.env.ALIYUN_OSS_REGION,
+  ossBucket: process.env.ALIYUN_OSS_BUCKET,
+  ossAccessKeyId: process.env.ALIYUN_OSS_ACCESS_KEY_ID,
+  ossAccessKeySecret: process.env.ALIYUN_OSS_ACCESS_KEY_SECRET,
+};
 
 async function main() {
   try {
     console.log('🚀 测试 OSS 上传功能\n');
 
-    if (!OSS_REGION || !OSS_BUCKET || !OSS_ACCESS_KEY_ID || !OSS_ACCESS_KEY_SECRET) {
+    if (!settings.ossRegion || !settings.ossBucket || !settings.ossAccessKeyId || !settings.ossAccessKeySecret) {
       throw new Error('缺少 OSS 配置，请检查 .env.local');
     }
 
     console.log('📝 OSS 配置:');
-    console.log(`  Region: ${OSS_REGION}`);
-    console.log(`  Bucket: ${OSS_BUCKET}`);
+    console.log(`  Region: ${settings.ossRegion}`);
+    console.log(`  Bucket: ${settings.ossBucket}`);
     console.log('');
 
-    // 初始化 OSS 客户端
-    const client = new OSS({
-      region: OSS_REGION,
-      accessKeyId: OSS_ACCESS_KEY_ID,
-      accessKeySecret: OSS_ACCESS_KEY_SECRET,
-      bucket: OSS_BUCKET,
-    });
+    const client = new OssClient(settings);
 
     console.log('✅ OSS 客户端初始化成功\n');
 
     // 创建测试文件
     const testContent = Buffer.from('Hello, HNU-TimeLetter! 测试上传功能。');
     const hash = crypto.createHash('md5').update(testContent).digest('hex');
-    const ossPath = `hnu-timeletter/test/${hash}.txt`;
+    const fileName = `test-${hash}.txt`;
 
-    console.log(`📤 上传测试文件: ${ossPath}`);
+    console.log(`📤 上传测试文件: ${fileName}`);
 
-    // 上传文件
-    const result = await client.put(ossPath, testContent);
+    const result = await client.upload(testContent, fileName);
     
     console.log('✅ 上传成功！');
     console.log(`📍 URL: ${result.url}`);
-    console.log(`🔗 公网访问: https://${OSS_BUCKET}.${OSS_REGION}.aliyuncs.com/${ossPath}`);
-
-    // 测试文件是否存在
-    console.log('\n🔍 验证文件是否存在...');
-    const headResult = await client.head(ossPath);
-    const contentLength = (headResult.res.headers as Record<string, unknown>)['content-length'];
-    console.log('✅ 文件存在，大小:', contentLength, 'bytes');
 
     console.log('\n✨ OSS 测试完成！');
 

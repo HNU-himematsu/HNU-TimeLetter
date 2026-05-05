@@ -2,6 +2,7 @@
 
 import { useRef, useState, useEffect } from 'react';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 
 /**
  * 关于我们 (About Us)
@@ -234,9 +235,11 @@ export function AboutUs() {
                       transition={{ type: 'spring', stiffness: 220, damping: 28 }}
                     >
                       {member.avatar ? (
-                        <img
+                        <Image
                           src={member.avatar}
                           alt={member.name}
+                          width={96}
+                          height={96}
                           className="w-full h-full object-cover"
                         />
                       ) : (

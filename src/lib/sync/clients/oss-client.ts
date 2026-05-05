@@ -1,39 +1,88 @@
 import * as crypto from 'node:crypto';
 import * as path from 'node:path';
-import OSS from 'ali-oss';
 import type {
   SyncEnvironmentSettings,
   SyncOssService,
 } from '../types';
 
+type OssRequestOptions = {
+  method: 'HEAD' | 'PUT';
+  objectKey: string;
+  body?: Buffer;
+  contentType?: string;
+};
+
+function encodeObjectKey(objectKey: string) {
+  return objectKey
+    .split('/')
+    .map((part) => encodeURIComponent(part))
+    .join('/');
+}
+
 export class OssClient implements SyncOssService {
-  private readonly client: OSS | null;
+  private readonly configured: boolean;
 
   constructor(private readonly settings: SyncEnvironmentSettings) {
-    if (
-      !settings.ossRegion ||
-      !settings.ossBucket ||
-      !settings.ossAccessKeyId ||
-      !settings.ossAccessKeySecret
-    ) {
-      this.client = null;
-      return;
-    }
-
-    this.client = new OSS({
-      region: settings.ossRegion,
-      accessKeyId: settings.ossAccessKeyId,
-      accessKeySecret: settings.ossAccessKeySecret,
-      bucket: settings.ossBucket,
-    });
+    this.configured = Boolean(
+      settings.ossRegion
+      && settings.ossBucket
+      && settings.ossAccessKeyId
+      && settings.ossAccessKeySecret,
+    );
   }
 
   get isConfigured() {
-    return Boolean(this.client);
+    return this.configured;
+  }
+
+  private getEndpointUrl(objectKey: string) {
+    return `https://${this.settings.ossBucket}.${this.settings.ossRegion}.aliyuncs.com/${encodeObjectKey(objectKey)}`;
+  }
+
+  private createAuthorizationHeader({
+    method,
+    objectKey,
+    contentType = '',
+  }: OssRequestOptions, date: string) {
+    const canonicalizedResource = `/${this.settings.ossBucket}/${objectKey}`;
+    const stringToSign = [
+      method,
+      '',
+      contentType,
+      date,
+      canonicalizedResource,
+    ].join('\n');
+    const signature = crypto
+      .createHmac('sha1', this.settings.ossAccessKeySecret || '')
+      .update(stringToSign)
+      .digest('base64');
+
+    return `OSS ${this.settings.ossAccessKeyId}:${signature}`;
+  }
+
+  private async request({ method, objectKey, body, contentType }: OssRequestOptions) {
+    const date = new Date().toUTCString();
+    const headers = new Headers({
+      Date: date,
+      Authorization: this.createAuthorizationHeader(
+        { method, objectKey, body, contentType },
+        date,
+      ),
+    });
+
+    if (contentType) {
+      headers.set('Content-Type', contentType);
+    }
+
+    return fetch(this.getEndpointUrl(objectKey), {
+      method,
+      headers,
+      body: body ? new Uint8Array(body) : undefined,
+    });
   }
 
   async upload(buffer: Buffer, fileName: string) {
-    if (!this.client || !this.settings.ossBucket || !this.settings.ossRegion) {
+    if (!this.isConfigured || !this.settings.ossBucket || !this.settings.ossRegion) {
       throw new Error('OSS 未配置，无法上传附件');
     }
 
@@ -42,14 +91,26 @@ export class OssClient implements SyncOssService {
     const ossPath = `hnu-timeletter/${hash}${ext}`;
 
     try {
-      await this.client.head(ossPath);
-    } catch (error) {
-      const maybeError = error as { code?: string; status?: number };
-      if (maybeError.code === 'NoSuchKey' || maybeError.status === 404) {
-        await this.client.put(ossPath, buffer);
-      } else {
-        throw error;
+      const headResponse = await this.request({
+        method: 'HEAD',
+        objectKey: ossPath,
+      });
+      if (!headResponse.ok && headResponse.status !== 404) {
+        throw new Error(`OSS HEAD ${headResponse.status} ${headResponse.statusText}`);
       }
+      if (headResponse.status === 404) {
+        const putResponse = await this.request({
+          method: 'PUT',
+          objectKey: ossPath,
+          body: buffer,
+          contentType: 'application/octet-stream',
+        });
+        if (!putResponse.ok) {
+          throw new Error(`OSS PUT ${putResponse.status} ${putResponse.statusText}`);
+        }
+      }
+    } catch (error) {
+      throw error;
     }
 
     return {
