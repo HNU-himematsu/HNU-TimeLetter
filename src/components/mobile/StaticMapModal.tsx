@@ -5,9 +5,9 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import data from '@/data/content.json';
 import { useContainedMapSize } from '@/lib/hooks';
 import { getPrimaryStory, getStoryAvatarUrl } from '@/lib/content';
+import { useContentData } from '@/lib/content-store';
 
 interface StaticMapModalProps {
   isOpen: boolean;
@@ -19,6 +19,7 @@ interface StaticMapModalProps {
  * 仅供地理参考，支持 Pin 点展示
  */
 export function StaticMapModal({ isOpen, onClose }: StaticMapModalProps) {
+  const data = useContentData();
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const [mapAspect, setMapAspect] = useState<number | null>(null);
   // 展示框 border-4 (4px) + box-content 绘制在 width/height 之外，预留 4px 安全内边距。

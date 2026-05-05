@@ -1,7 +1,9 @@
 'use client';
 
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
+import type { Contributor } from '@/lib/types';
+import { useContributorsData } from '@/lib/content-store';
 
 /**
  * 鸣谢 (Credits)
@@ -22,17 +24,7 @@ import { motion, useInView } from 'framer-motion';
  *     沿 P4→P5 方向退让首段行首，避免在窄视口下擦边。
  */
 
-import contributorsData from '@/data/contributors.json';
-import type { Contributor } from '@/lib/types';
-
-// 将 contributors 平分到 3 行中
-const contributors = contributorsData.contributors as Contributor[];
 const rowCount = 3;
-const CONTRIBUTOR_ROWS: Contributor[][] = Array.from({ length: rowCount }, () => []);
-
-contributors.forEach((contributor, index) => {
-  CONTRIBUTOR_ROWS[index % rowCount].push(contributor);
-});
 
 function MarqueeRow({
   items,
@@ -85,6 +77,14 @@ function MarqueeRow({
 export function Credits() {
   const contentRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(contentRef, { once: true, margin: '-20%' });
+  const { contributors } = useContributorsData();
+  const contributorRows = useMemo(() => {
+    const rows: Contributor[][] = Array.from({ length: rowCount }, () => []);
+    contributors.forEach((contributor, index) => {
+      rows[index % rowCount].push(contributor);
+    });
+    return rows;
+  }, [contributors]);
 
   return (
     <section className="relative w-full min-h-screen flex flex-col justify-center overflow-hidden">
@@ -125,7 +125,7 @@ export function Credits() {
             参与贡献名单
           </h3>
           <div className="space-y-2">
-            {CONTRIBUTOR_ROWS.map((row, i) => (
+            {contributorRows.map((row, i) => (
               <MarqueeRow
                 key={i}
                 items={row}

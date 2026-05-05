@@ -3,9 +3,9 @@
 import { useMemo } from 'react';
 import Image from 'next/image';
 import { motion, useReducedMotion } from 'framer-motion';
-import data from '@/data/content.json';
 import type { Story } from '@/lib/types';
 import { flattenStoriesWithLocationName, getStoryAvatarUrl, getStoryMainImageUrl } from '@/lib/content';
+import { useContentData } from '@/lib/content-store';
 
 interface StoryFeedProps {
   onStoryClick: (story: Story) => void;
@@ -28,12 +28,14 @@ function StoryCard({ story, onClick }: { story: Story; onClick: () => void }) {
       onClick={onClick}
       whileTap={shouldReduceMotion ? {} : { scale: 0.96 }}
     >
-      <div className="relative w-full bg-stone-100">
-        <img
+      <div className="relative w-full min-h-40 bg-stone-100">
+        <Image
           src={getStoryMainImageUrl(story)}
           alt={story.characterName}
-          loading="lazy"
-          className="w-full h-auto object-cover"
+          width={320}
+          height={420}
+          className="h-auto w-full object-cover"
+          sizes="50vw"
         />
       </div>
 
@@ -65,9 +67,10 @@ function StoryCard({ story, onClick }: { story: Story; onClick: () => void }) {
  * 负责人: Developer C
  */
 export function StoryFeed({ onStoryClick }: StoryFeedProps) {
+  const contentData = useContentData();
   const allStories = useMemo(() => {
-    return flattenStoriesWithLocationName(data.locations) as Story[];
-  }, []);
+    return flattenStoriesWithLocationName(contentData.locations) as Story[];
+  }, [contentData.locations]);
 
   return (
     <div className="w-full h-full overflow-y-auto overflow-x-hidden scrollbar-hide">

@@ -25,7 +25,7 @@
 
 | 层次 | 技术 |
 |---|---|
-| 框架 | Next.js 16.1.6（App Router，Turbopack） |
+| 框架 | Next.js 16.2.4（App Router，Turbopack） |
 | 语言 | TypeScript 5+（Strict Mode） |
 | 样式 | Tailwind CSS v4 + Radix UI / Shadcn 风格组件 |
 | 动画 | Framer Motion v12 |
@@ -60,7 +60,7 @@ copy .env.example .env.local  # Windows
 - **飞书基础**：`FEISHU_APP_ID` / `FEISHU_APP_SECRET` / `FEISHU_APP_TOKEN` / `FEISHU_TABLE_ID` / `FEISHU_VIEW_ID`
 - **创作公示板**：`FEISHU_CREATION_TABLE_ID` / `FEISHU_CREATION_VIEW_ID`
 - **阿里云 OSS**：`ALIYUN_OSS_REGION` / `ALIYUN_OSS_BUCKET` / `ALIYUN_OSS_ACCESS_KEY_ID` / `ALIYUN_OSS_ACCESS_KEY_SECRET`
-- **后台鉴权**：`ADMIN_PASSWORD`（未配置时回退为 `admin`，上线前务必覆盖）
+- **后台鉴权**：`ADMIN_PASSWORD` / `ADMIN_SESSION_SECRET`（生产环境的 `ADMIN_SESSION_SECRET` 长度不少于 32 字节）
 
 ### 3. 同步数据
 
@@ -70,7 +70,7 @@ copy .env.example .env.local  # Windows
 npm run sync
 ```
 
-产物写入 `src/data/content.json`（首页故事）与 `src/data/creation-board.json`（创作公示板）。
+产物写入 `src/data/content.json`（首页故事）、`src/data/creation-board.json`（创作公示板）与 `src/data/contributors.json`（鸣谢名单）。前台通过内容 API 读取运行时 JSON，客户端定时刷新数据。
 
 ### 4. 启动开发服务器
 
@@ -131,13 +131,24 @@ src/
 
 ## 部署
 
-项目默认部署到 Vercel。构建命令会自动拉取飞书最新数据：
+项目包含两类运行模型：
+
+| 环境 | 用途 | 数据模型 |
+|---|---|---|
+| Vercel Preview | 分支预览与视觉效果验收 | 使用仓库内 `src/data/*.json` 作为构建时兜底数据，内容 API 以 `no-store` 响应返回当前运行时文件 |
+| 自托管生产环境 | 正式发布与后台同步 | GitHub Actions 在 `release` 分支执行质量门禁、同步飞书、构建产物、上传 OSS，并由服务器拉取部署；后台同步写入 `src/data/*.json` 后通过内容 API 热更新前台数据 |
+
+常用验证命令：
 
 ```bash
+npm run lint
+npm run typecheck
+npm run test:e2e
+npm audit --omit=dev
 npm run build
 ```
 
-生产环境须通过 Vercel Environment Variables 下发 `ADMIN_PASSWORD`、飞书与 OSS 凭证。
+生产环境须下发 `ADMIN_PASSWORD`、`ADMIN_SESSION_SECRET`、飞书与 OSS 凭证。`ADMIN_SESSION_SECRET` 使用独立随机值，长度不少于 32 字节。
 
 ## 文档索引
 
