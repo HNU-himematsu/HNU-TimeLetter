@@ -3,12 +3,12 @@ import * as path from 'path';
 
 function resolveBaseDir(envValue: string | undefined, fallbackRelativePath: string) {
   if (!envValue || !envValue.trim()) {
-    return path.resolve(process.cwd(), fallbackRelativePath);
+    return path.resolve(/* turbopackIgnore: true */ process.cwd(), fallbackRelativePath);
   }
 
   return path.isAbsolute(envValue)
     ? envValue
-    : path.resolve(process.cwd(), envValue);
+    : path.resolve(/* turbopackIgnore: true */ process.cwd(), envValue);
 }
 
 export function getSyncPaths() {

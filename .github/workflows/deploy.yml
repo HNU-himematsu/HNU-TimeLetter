@@ -35,6 +35,18 @@ jobs:
       - name: 安装全量依赖（含构建工具）
         run: npm ci
 
+      - name: 代码风格检查
+        run: npm run lint
+
+      - name: 类型检查
+        run: npm run typecheck
+
+      - name: 生产依赖安全审计
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: 端到端测试
+        run: npm run test:e2e
+
       # npm run publish = npm run sync && npm run build
       # sync 步骤从飞书拉取数据写入 src/data/，build 步骤将数据打入 .next/
       - name: 同步飞书数据并构建
@@ -77,27 +89,49 @@ jobs:
             ecosystem.config.js \
             deploy
 
-      # 利用项目已有的 ali-oss 依赖完成上传，并生成 1 小时有效的签名下载链接
       - name: 上传至 OSS 并生成签名下载链接
         id: oss_upload
         run: |
-          node -e "
-          const OSS = require('ali-oss');
+          node - <<'NODE'
+          const crypto = require('node:crypto');
+          const fs = require('node:fs');
+          const key = 'ci-deploy/latest.tar.gz';
+          const bucket = process.env.ALIYUN_OSS_BUCKET;
+          const region = process.env.ALIYUN_OSS_REGION;
+          const accessKeyId = process.env.ALIYUN_OSS_ACCESS_KEY_ID;
+          const accessKeySecret = process.env.ALIYUN_OSS_ACCESS_KEY_SECRET;
+          const host = `${bucket}.${region}.aliyuncs.com`;
+          const path = `/${key}`;
+          const resource = `/${bucket}/${key}`;
+          const sign = (value) => crypto.createHmac('sha1', accessKeySecret).update(value).digest('base64');
+
+          function authorization(method, date, contentType = '') {
+            return `OSS ${accessKeyId}:${sign([method, '', contentType, date, resource].join('\n'))}`;
+          }
+
           (async () => {
-            const client = new OSS({
-              region: process.env.ALIYUN_OSS_REGION,
-              accessKeyId: process.env.ALIYUN_OSS_ACCESS_KEY_ID,
-              accessKeySecret: process.env.ALIYUN_OSS_ACCESS_KEY_SECRET,
-              bucket: process.env.ALIYUN_OSS_BUCKET,
+            const body = fs.readFileSync('/tmp/deploy.tar.gz');
+            const putDate = new Date().toUTCString();
+            const putResponse = await fetch(`https://${host}${path}`, {
+              method: 'PUT',
+              headers: {
+                Date: putDate,
+                Authorization: authorization('PUT', putDate),
+                'Content-Type': 'application/octet-stream',
+              },
+              body,
             });
-            const key = 'ci-deploy/latest.tar.gz';
-            await client.put(key, '/tmp/deploy.tar.gz');
-            const url = client.signatureUrl(key, { expires: 3600 });
-            const fs = require('fs');
+            if (!putResponse.ok) {
+              throw new Error(`OSS upload failed: ${putResponse.status} ${putResponse.statusText}`);
+            }
+
+            const expires = Math.floor(Date.now() / 1000) + 3600;
+            const signature = encodeURIComponent(sign(['GET', '', '', expires, resource].join('\n')));
+            const url = `https://${host}${path}?OSSAccessKeyId=${encodeURIComponent(accessKeyId)}&Expires=${expires}&Signature=${signature}`;
             fs.appendFileSync(process.env.GITHUB_OUTPUT, 'deploy_url=' + url + '\n');
             console.log('OSS upload complete');
           })().catch(e => { console.error(e); process.exit(1); });
-          "
+          NODE
         env:
           ALIYUN_OSS_REGION: ${{ secrets.ALIYUN_OSS_REGION }}
           ALIYUN_OSS_BUCKET: ${{ secrets.ALIYUN_OSS_BUCKET }}
@@ -138,6 +172,7 @@ jobs:
             printf 'ALIYUN_OSS_ACCESS_KEY_SECRET=%s\n'  "${ALIYUN_OSS_ACCESS_KEY_SECRET}"
             printf 'ADMIN_PASSWORD=%s\n'                "${ADMIN_PASSWORD}"
             printf 'ADMIN_SESSION_SECRET=%s\n'          "${ADMIN_SESSION_SECRET}"
+            printf 'DATA_PUBLISH_MODE=runtime_api\n'
             printf 'SYNC_RESTART_COMMAND=pm2 reload %s --update-env\n' "${PM2_APP_NAME}"
             printf 'SYNC_HEALTHCHECK_URL=http://localhost:3000\n'
           } | ssh -p "$SERVER_PORT" \

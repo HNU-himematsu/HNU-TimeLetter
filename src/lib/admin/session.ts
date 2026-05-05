@@ -1,7 +1,9 @@
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
+const MIN_SESSION_SECRET_BYTES = 32;
+const DEFAULT_PASSWORD = 'admin';
 
 function getPassword() {
-  return process.env.ADMIN_PASSWORD || 'admin';
+  return process.env.ADMIN_PASSWORD || DEFAULT_PASSWORD;
 }
 
 export function getAdminCookieName() {
@@ -13,7 +15,16 @@ export function getSessionMaxAgeSeconds() {
 }
 
 export function getAdminSessionSecret() {
-  return process.env.ADMIN_SESSION_SECRET || `${getPassword()}:admin-auth`;
+  const secret = process.env.ADMIN_SESSION_SECRET;
+  if (secret && new TextEncoder().encode(secret).byteLength >= MIN_SESSION_SECRET_BYTES) {
+    return secret;
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('ADMIN_SESSION_SECRET must be at least 32 bytes in production');
+  }
+
+  return 'dev-admin-session-secret-minimum-32-bytes';
 }
 
 function bytesToBase64(bytes: Uint8Array) {
@@ -110,4 +121,8 @@ export async function verifySessionToken(value: string | undefined) {
 
 export function isValidAdminPassword(password: string) {
   return password === getPassword();
+}
+
+export function isDefaultAdminPassword() {
+  return getPassword() === DEFAULT_PASSWORD;
 }

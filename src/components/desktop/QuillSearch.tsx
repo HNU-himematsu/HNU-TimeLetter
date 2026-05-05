@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import data from '@/data/content.json';
+import { useContentData } from '@/lib/content-store';
 
 /**
  * QuillSearch (羽毛笔搜索组件)
@@ -24,7 +24,7 @@ interface QuillSearchProps {
 }
 
 /** 从数据中提取所有角色名及其 locationId */
-function buildCharacterIndex(): { name: string; locationId: string }[] {
+function buildCharacterIndex(data: ReturnType<typeof useContentData>): { name: string; locationId: string }[] {
     const seen = new Set<string>();
     const result: { name: string; locationId: string }[] = [];
     for (const loc of data.locations) {
@@ -86,6 +86,7 @@ const ASH_PARTICLES = Array.from({ length: 12 }, (_, i) => ({
 }));
 
 export function QuillSearch({ onSearchResult }: QuillSearchProps) {
+    const data = useContentData();
     const [phase, setPhase] = useState<SearchPhase>('idle');
     const [inputValue, setInputValue] = useState('');
     const [showSuggestions, setShowSuggestions] = useState(false);
@@ -94,8 +95,9 @@ export function QuillSearch({ onSearchResult }: QuillSearchProps) {
     const [mounted, setMounted] = useState(false);
     const [burnSeed, setBurnSeed] = useState(0);
     const inputRef = useRef<HTMLInputElement>(null);
+    const submitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const characterIndex = useMemo(() => buildCharacterIndex(), []);
+    const characterIndex = useMemo(() => buildCharacterIndex(data), [data]);
 
     // 确保 Portal 仅在客户端挂载后使用
     useEffect(() => setMounted(true), []);
@@ -193,6 +195,9 @@ export function QuillSearch({ onSearchResult }: QuillSearchProps) {
         const query = finalName.trim();
         if (!query || phase !== 'letter') return;
 
+        if (submitTimerRef.current) {
+            clearTimeout(submitTimerRef.current);
+        }
         setShowSuggestions(false);
         if (typeof overrideName === 'string') {
             setInputValue(overrideName);
@@ -200,7 +205,8 @@ export function QuillSearch({ onSearchResult }: QuillSearchProps) {
         setPhase('writing');
 
         // 0.5s 书写动画后进入 burning
-        setTimeout(() => {
+        submitTimerRef.current = setTimeout(() => {
+            submitTimerRef.current = null;
             const match = characterIndex.find((c) =>
                 c.name.toLowerCase().includes(query.toLowerCase())
             );
@@ -215,6 +221,14 @@ export function QuillSearch({ onSearchResult }: QuillSearchProps) {
             setPhase('burning');
         }, 500);
     }, [inputValue, phase, characterIndex]);
+
+    useEffect(() => {
+        return () => {
+            if (submitTimerRef.current) {
+                clearTimeout(submitTimerRef.current);
+            }
+        };
+    }, []);
 
     // burning 阶段 — 焚毁动画结束后执行回调或退回 idle
     useEffect(() => {
@@ -240,6 +254,10 @@ export function QuillSearch({ onSearchResult }: QuillSearchProps) {
     // 点击遮罩或墨水瓶 → 回到 idle
     const handleDismiss = useCallback(() => {
         if (phase === 'burning') return; // 焚毁中不允许关闭
+        if (submitTimerRef.current) {
+            clearTimeout(submitTimerRef.current);
+            submitTimerRef.current = null;
+        }
         setPhase('idle');
         setInputValue('');
         setNotFound(false);
