@@ -15,20 +15,26 @@ export const contributorsModule: TableSyncModule<'contributors'> = {
       ctx.settings.feishuContributorsTableId
     );
 
-    const contributors: Contributor[] = records.map((record) => {
+    const contributors: Contributor[] = [];
+
+    records.forEach((record) => {
       const fields = record.fields;
       
       // 兼容多类型：支持普通文本列或人员列
-      const name = getText(fields['姓名']) || getPersonName(fields['姓名']) || '匿名用户';
+      const name = getText(fields['姓名']) || getPersonName(fields['姓名']);
+
+      // 如果没有名字，视为飞书表格的空行，直接跳过
+      if (!name || name.trim() === '') return;
+
       const role = getText(fields['职位']) || getText(fields['角色']) || '';
       const message = getText(fields['留言']) || getText(fields['寄语']) || getText(fields['感言']) || '';
 
-      return {
+      contributors.push({
         id: record.record_id,
-        name,
+        name: name.trim(),
         role,
         message,
-      };
+      });
     });
 
     const info = await writeContributors(ctx, contributors);
