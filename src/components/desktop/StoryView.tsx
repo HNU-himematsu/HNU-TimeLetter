@@ -64,8 +64,7 @@ export function StoryView({ stories }: StoryViewProps) {
           <div className="max-w-xl rounded-[32px] border border-[#e7ddcf] bg-white/90 px-10 py-12 text-center shadow-[0_24px_80px_rgba(120,84,48,0.12)]">
             <p className="font-serif text-3xl tracking-[0.2em] text-stone-700">空地点</p>
             <p className="mt-4 font-serif text-base leading-8 text-stone-500">
-              这里的 pin 已经就位，但故事卡片还没有被写进时光笺。
-              你可以先在飞书故事表里补上角色、图片与文案，再重新同步网页内容。
+              这里的 pin 已经就位，但故事卡片还没有被写进时光笺
             </p>
           </div>
         </div>

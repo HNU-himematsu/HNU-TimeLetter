@@ -22,6 +22,9 @@ const bodyFont = localFont({
 export const metadata: Metadata = {
   title: "与她的海大时光笺 | HNU-TimeLetter",
   description: "基于海南大学校园地图的交互式视觉叙事网站，展示 Galgame 角色与校园实景结合的决定性瞬间",
+  icons: {
+    icon: "/favicon.png",
+  },
 };
 
 export default function RootLayout({
