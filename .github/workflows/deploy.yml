@@ -18,7 +18,7 @@ jobs:
     env:
       # 非敏感配置读取 GitHub Variables（Settings → Variables → Actions）
       # 若未设置则使用括号内的默认值
-      SERVER_PORT: ${{ vars.SERVER_PORT || '33' }}
+      SERVER_PORT: ${{ vars.SERVER_PORT || '22' }}
       DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '/var/www/web' }}
       PM2_APP_NAME: ${{ vars.PM2_APP_NAME || 'web' }}
 
