@@ -88,9 +88,9 @@ export function GlobalNav() {
       }}
       aria-label="全局导航"
     >
-      {/* 胶囊：较窄(~4vw)，top 留 2.5vh，right 贴视口更紧 */}
+      {/* 胶囊 + 公告按钮：竖向排列，居中对齐，top 留 2.5vh，right 贴视口更紧 */}
       <div
-        className="pointer-events-auto absolute"
+        className="pointer-events-auto absolute flex flex-col items-center gap-2"
         style={{
           top: '2.5vh',
           right: '0.8vw',
@@ -142,6 +142,27 @@ export function GlobalNav() {
             })}
           </ul>
         </LayoutGroup>
+
+        {/* 公告圆形按钮：直径与胶囊同宽，磨砂亚克力 + 红色描边，hover 变实心红 */}
+        <motion.a
+          href="https://himematsu.feishu.cn/docx/EbsDdehuLo1801xBzb1cxzJLnHb"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="公告"
+          className="relative flex items-center justify-center rounded-full border backdrop-blur-md shadow-sm font-serif tracking-[0.18em]"
+          style={{
+            width: 'clamp(44px, 4vw, 64px)',
+            height: 'clamp(44px, 4vw, 64px)',
+            borderColor: '#c23643',
+            background: 'rgba(246, 241, 235, 0.55)',
+            color: '#563B3B',
+            fontSize: 'clamp(11px, 0.85vw, 13px)',
+          }}
+          whileHover={{ background: '#c23643', color: '#ffffff' }}
+          transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.2 }}
+        >
+          公告
+        </motion.a>
       </div>
     </div>
   );
