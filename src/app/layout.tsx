@@ -30,7 +30,26 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN">
+    <html lang="zh-CN" suppressHydrationWarning>
+      <head>
+        {/*
+         * 关键路径图标预加载 —— 浏览器解析 HTML 时以最高优先级并行下载，
+         * 消除开屏首帧渲染前的网络等待延迟。
+         */}
+        <link rel="preload" as="image" href="/HIMEMATSU.svg" fetchPriority="high" />
+        {/*
+         * 开屏滚动锁定内联脚本 —— 在任何 JS bundle 执行、React hydration
+         * 发生之前同步运行，从首字节即锁住纵向滚动，消除 useEffect 延迟窗口。
+         * 此时 document.body 尚未解析，仅操作已存在的 <html> 元素。
+         * React 侧的 useEffect 在 hydration 后同步追加 body 上同名类，
+         * 两者合力保证全程无滚动泄漏。
+         */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "document.documentElement.classList.add('intro-scroll-locked');",
+          }}
+        />
+      </head>
       <body
         className={`${displayFont.variable} ${bodyFont.variable} font-sans antialiased`}
       >

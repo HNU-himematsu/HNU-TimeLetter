@@ -45,7 +45,7 @@ const FOOTER_LINKS: FooterLink[] = [
   {
     title: 'GitHub 仓库',
     description: '网页项目源码',
-    href: 'https://github.com/Akinokuni/HNU-TimeLetter',
+    href: 'https://github.com/HNU-himematsu/HNU-TimeLetter',
   },
 ];
 
