@@ -1,4 +1,5 @@
 import type {
+  CardHeaderInfo,
   Contributor,
   CreationIdea,
   LocationPoint,
@@ -70,13 +71,21 @@ function validateCreationIdea(value: unknown, path: string): CreationIdea {
   assertString(value.cardId, `${path}.cardId`);
   assertString(value.content, `${path}.content`);
   assertString(value.author, `${path}.author`);
-  assertString(value.submitter, `${path}.submitter`);
   assertArray(value.images, `${path}.images`);
   value.images.forEach((image, index) => assertString(image, `${path}.images[${index}]`));
   assertString(value.createdAt, `${path}.createdAt`);
   assertString(value.tags, `${path}.tags`);
 
   return value as unknown as CreationIdea;
+}
+
+function validateCardHeaderInfo(value: unknown, path: string): CardHeaderInfo {
+  assertObject(value, path);
+  assertString(value.cardId, `${path}.cardId`);
+  assertString(value.location, `${path}.location`);
+  assertString(value.character, `${path}.character`);
+
+  return value as unknown as CardHeaderInfo;
 }
 
 function validateContributor(value: unknown, path: string): Contributor {
@@ -95,6 +104,7 @@ export type ContentData = {
 
 export type CreationBoardData = {
   ideas: CreationIdea[];
+  headers: CardHeaderInfo[];
 };
 
 export type ContributorsData = {
@@ -112,6 +122,10 @@ export function validateCreationBoardData(value: unknown): CreationBoardData {
   assertObject(value, 'creationBoard');
   assertArray(value.ideas, 'creationBoard.ideas');
   value.ideas.forEach((idea, index) => validateCreationIdea(idea, `creationBoard.ideas[${index}]`));
+  if (!Array.isArray(value.headers)) (value as Record<string, unknown>).headers = [];
+  (value.headers as unknown[]).forEach((header, index) =>
+    validateCardHeaderInfo(header, `creationBoard.headers[${index}]`),
+  );
   return value as CreationBoardData;
 }
 

@@ -115,7 +115,6 @@ function createInitialJob(request: SyncRunRequest): SyncJobRecord {
     jobId: createJobId(),
     kind,
     status: 'queued',
-    publishStatus: 'pending',
     tables,
     effectiveTables,
     dependencyMode,

@@ -16,13 +16,19 @@ export interface Story {
   locationName?: string;
 }
 
+// 创作公示板 — 头表中每个 CardID 对应的地点与角色元数据
+export interface CardHeaderInfo {
+  cardId: string;
+  location: string;
+  character: string;
+}
+
 // 创作公示板实体 (对应揭示板表中的一行展示记录)
 export interface CreationIdea {
   id: string;
   cardId: string;
   content: string;
   author: string;
-  submitter: string;
   images: string[];
   createdAt: string;
   tags: string;
@@ -45,6 +51,8 @@ export interface CreationCard {
   cardId: string;
   addIdeaUrl: string;
   entries: CreationEntry[];
+  location?: string;
+  character?: string;
 }
 
 // 地点实体 (前端聚合用)

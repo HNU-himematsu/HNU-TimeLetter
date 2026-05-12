@@ -5,7 +5,7 @@ export type DataPublishMode = 'build_time' | 'runtime_api';
 
 export type SyncJobKind = 'sync-data' | 'sync-data-and-publish';
 
-export type SyncTableKey = 'locations' | 'stories' | 'creation_board' | 'contributors';
+export type SyncTableKey = 'locations' | 'stories' | 'creation_board' | 'creation_headers' | 'contributors';
 
 export type DependencyMode = 'read_local' | 'run_dependencies' | 'strict';
 
@@ -46,7 +46,7 @@ export interface SyncRunRequest {
   dependencyMode?: DependencyMode;
   includeAssets?: boolean;
   continueOnTableError?: boolean;
-  triggeredBy?: 'admin-ui' | 'scheduler' | 'cli';
+  triggeredBy?: 'admin-ui' | 'scheduler' | 'cli' | 'webhook';
   note?: string;
 }
 
@@ -114,6 +114,7 @@ export interface SyncEnvironmentSettings {
   feishuViewId?: string;
   feishuCreationTableId?: string;
   feishuCreationViewId?: string;
+  feishuCreationHeaderTableId?: string;
   feishuOssTableId?: string;
   feishuLocationsTableId?: string;
   feishuContributorsTableId?: string;

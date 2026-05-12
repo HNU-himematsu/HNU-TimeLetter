@@ -1,12 +1,16 @@
-import type { CreationIdea, CreationCard, CreationEntry } from '@/lib/types';
+import type { CardHeaderInfo, CreationIdea, CreationCard, CreationEntry } from '@/lib/types';
 
 const ADD_IDEA_URL_TEMPLATE =
   'https://himematsu.feishu.cn/share/base/form/shrcnhSnlbEAclIwPC770VdOmWf?hide_CardID=1&prefill_CardID=';
 
 /**
  * 将原始 CreationIdea[] 按 CardID 聚合为页面消费的 CreationCard[]
+ * 可选传入头表数据，自动将地点/角色合并到对应卡片
  */
-export function groupIdeasToCards(ideas: CreationIdea[]): CreationCard[] {
+export function groupIdeasToCards(
+  ideas: CreationIdea[],
+  headers: CardHeaderInfo[] = [],
+): CreationCard[] {
   const cardMap = new Map<string, CreationEntry[]>();
 
   for (const idea of ideas) {
@@ -26,13 +30,18 @@ export function groupIdeasToCards(ideas: CreationIdea[]): CreationCard[] {
     cardMap.get(idea.cardId)!.push(entry);
   }
 
+  const headerMap = new Map<string, CardHeaderInfo>(headers.map(h => [h.cardId, h]));
+
   const cards: CreationCard[] = [];
   for (const [cardId, entries] of cardMap) {
+    const hdr = headerMap.get(cardId);
     cards.push({
       id: cardId,
       cardId,
       addIdeaUrl: `${ADD_IDEA_URL_TEMPLATE}${encodeURIComponent(cardId)}`,
       entries,
+      location: hdr?.location || undefined,
+      character: hdr?.character || undefined,
     });
   }
 

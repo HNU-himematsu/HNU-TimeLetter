@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default async function CreationPage() {
-  const { ideas } = await getCreationBoardData();
+  const { ideas, headers } = await getCreationBoardData();
 
-  return <CreationBoardPage ideas={ideas} />;
+  return <CreationBoardPage ideas={ideas} headers={headers} />;
 }

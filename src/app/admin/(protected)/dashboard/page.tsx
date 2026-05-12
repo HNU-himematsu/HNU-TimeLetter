@@ -5,12 +5,9 @@ import { Button } from '@/components/ui/button';
 import type {
   DependencyMode,
   SyncConfigResponse,
-  SyncJobKind,
   SyncJobRecord,
   SyncTableKey,
 } from '@/lib/sync/types';
-
-type JobKind = SyncJobKind;
 
 type TableDefinition = {
   key: SyncTableKey;
@@ -20,6 +17,7 @@ type TableDefinition = {
 
 type ConfigResponse = SyncConfigResponse & {
   availableTables: TableDefinition[];
+  nextRunAt?: string | null;
 };
 
 type Job = SyncJobRecord;
@@ -28,7 +26,6 @@ type ConfigFormState = {
   enabled: boolean;
   cron: string;
   defaultTables: SyncTableKey[];
-  defaultJobKind: JobKind;
 };
 
 type RunFormState = {
@@ -103,23 +100,6 @@ function getStatusLabel(status: string) {
   }
 }
 
-function getPublishStatusLabel(status?: string) {
-  switch (status) {
-    case 'not_required':
-      return '无需发布';
-    case 'pending':
-      return '已同步未发布';
-    case 'building':
-      return '发布中';
-    case 'published':
-      return '已发布';
-    case 'publish_failed':
-      return '发布失败';
-    default:
-      return status ?? '未知';
-  }
-}
-
 function getStatusBadgeClass(status?: string) {
   switch (status) {
     case 'running':
@@ -159,10 +139,13 @@ export default function DashboardPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [configForm, setConfigForm] = useState<ConfigFormState | null>(null);
   const [runForm, setRunForm] = useState<RunFormState | null>(null);
-  const [submittingKind, setSubmittingKind] = useState<JobKind | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [savingConfig, setSavingConfig] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [notice, setNotice] = useState<NoticeState>(null);
+  const [expandedJobLog, setExpandedJobLog] = useState<string | null>(null);
+  const [jobLogs, setJobLogs] = useState<Record<string, string[]>>({});
+  const [loadingLog, setLoadingLog] = useState<string | null>(null);
 
   const fetchData = async (showRefreshing = false) => {
     if (showRefreshing) {
@@ -183,7 +166,6 @@ export default function DashboardPage() {
             enabled: configData.config.enabled,
             cron: configData.config.cron,
             defaultTables: [...configData.config.defaultTables],
-            defaultJobKind: configData.config.defaultJobKind,
           },
         );
         setRunForm((current) =>
@@ -277,7 +259,6 @@ export default function DashboardPage() {
       enabled: payload.config.enabled,
       cron: payload.config.cron,
       defaultTables: [...payload.config.defaultTables],
-      defaultJobKind: payload.config.defaultJobKind,
     });
     setRunForm((current) => ({
       dependencyMode: current?.dependencyMode ?? 'read_local',
@@ -289,7 +270,7 @@ export default function DashboardPage() {
     setNotice(null);
   };
 
-  const handleCreateJob = async (kind: JobKind) => {
+  const handleSync = async () => {
     if (!runForm || runForm.tables.length === 0) {
       setNotice({
         type: 'error',
@@ -298,7 +279,7 @@ export default function DashboardPage() {
       return;
     }
 
-    setSubmittingKind(kind);
+    setIsSubmitting(true);
     setNotice(null);
 
     try {
@@ -306,7 +287,7 @@ export default function DashboardPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          kind,
+          kind: 'sync-data',
           tables: runForm.tables,
           dependencyMode: runForm.dependencyMode,
           includeAssets: runForm.includeAssets,
@@ -327,10 +308,7 @@ export default function DashboardPage() {
 
       setNotice({
         type: 'success',
-        text:
-          kind === 'sync-data'
-            ? `已创建同步任务 ${data.jobId ?? ''}`.trim()
-            : `已创建同步并发布任务 ${data.jobId ?? ''}`.trim(),
+        text: `已创建同步任务 ${data.jobId ?? ''}`.trim(),
       });
       setTimeout(() => {
         void fetchData();
@@ -341,7 +319,7 @@ export default function DashboardPage() {
         text: error instanceof Error ? error.message : '创建同步任务失败',
       });
     } finally {
-      setSubmittingKind(null);
+      setIsSubmitting(false);
     }
   };
 
@@ -374,7 +352,6 @@ export default function DashboardPage() {
         enabled: data.config.enabled,
         cron: data.config.cron,
         defaultTables: [...data.config.defaultTables],
-        defaultJobKind: data.config.defaultJobKind,
       });
       setNotice({
         type: 'success',
@@ -390,6 +367,27 @@ export default function DashboardPage() {
     }
   };
 
+  const toggleJobLog = async (jobId: string) => {
+    if (expandedJobLog === jobId) {
+      setExpandedJobLog(null);
+      return;
+    }
+    setExpandedJobLog(jobId);
+    if (jobLogs[jobId]) return;
+    setLoadingLog(jobId);
+    try {
+      const res = await fetch(`/api/admin/sync/jobs/${jobId}/logs`, { cache: 'no-store' });
+      if (res.ok) {
+        const data = (await res.json()) as { lines: string[]; total: number };
+        setJobLogs((prev) => ({ ...prev, [jobId]: data.lines }));
+      }
+    } catch {
+      setJobLogs((prev) => ({ ...prev, [jobId]: ['（日志加载失败）'] }));
+    } finally {
+      setLoadingLog(null);
+    }
+  };
+
   if (!payload || !configForm || !runForm) {
     return <div className="p-8 text-sm text-gray-600">正在加载后台配置...</div>;
   }
@@ -400,7 +398,7 @@ export default function DashboardPage() {
         <div>
           <h2 className="text-2xl font-bold text-gray-900">系统控制台</h2>
           <p className="mt-1 text-sm text-gray-600">
-            发布模式为构建期数据。同步完成后，“同步并发布”继续执行构建与重启。
+            数据同步后立即生效，无需重新构建。
           </p>
         </div>
         <Button
@@ -426,7 +424,7 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <section className="rounded border border-gray-200 bg-white p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900">同步与发布状态</h3>
+          <h3 className="text-lg font-semibold text-gray-900">同步状态</h3>
           <div className="mt-4 space-y-3 text-sm text-gray-700">
             <div className="flex items-center justify-between gap-3">
               <span>任务状态</span>
@@ -442,26 +440,9 @@ export default function DashboardPage() {
               <span>上次同步</span>
               <span className="text-right">{formatTime(payload.runtime.lastRunAt)}</span>
             </div>
-            <div className="flex items-center justify-between gap-3">
-              <span>上次发布</span>
-              <span className="text-right">{formatTime(payload.runtime.lastPublishAt)}</span>
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <span>发布模式</span>
-              <span>{payload.config.dataPublishMode}</span>
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <span>待发布数据</span>
-              <span>{payload.runtime.hasPendingPublish ? '有' : '无'}</span>
-            </div>
             {currentJob && (
               <div className="rounded border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700">
                 执行中任务：{currentJob.jobId}
-              </div>
-            )}
-            {lastJob?.publishStatus && (
-              <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
-                最近任务发布状态：{getPublishStatusLabel(lastJob.publishStatus)}
               </div>
             )}
           </div>
@@ -472,7 +453,7 @@ export default function DashboardPage() {
             <div>
               <h3 className="text-lg font-semibold text-gray-900">手动同步</h3>
               <p className="mt-1 text-sm text-gray-600">
-                支持按表触发同步，也支持在同步完成后继续执行构建与重启。
+                按表触发数据同步，更新后立即生效。
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -623,25 +604,13 @@ export default function DashboardPage() {
                 已选 {runForm.tables.length} 张表，实际执行顺序将根据依赖解析后生成。
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Button
-                  onClick={() => void handleCreateJob('sync-data')}
-                  disabled={Boolean(submittingKind) || isRunning || runForm.tables.length === 0}
-                  className="w-full"
-                >
-                  {submittingKind === 'sync-data' ? '创建中...' : '同步数据'}
-                </Button>
-                <Button
-                  onClick={() => void handleCreateJob('sync-data-and-publish')}
-                  disabled={Boolean(submittingKind) || isRunning || runForm.tables.length === 0}
-                  className="w-full"
-                  variant="outline"
-                >
-                  {submittingKind === 'sync-data-and-publish'
-                    ? '创建中...'
-                    : '同步并发布'}
-                </Button>
-              </div>
+              <Button
+                onClick={() => void handleSync()}
+                disabled={isSubmitting || isRunning || runForm.tables.length === 0}
+                className="w-full"
+              >
+                {isSubmitting ? '创建中...' : '同步数据'}
+              </Button>
             </div>
           </div>
         </section>
@@ -652,7 +621,7 @@ export default function DashboardPage() {
           <div>
             <h3 className="text-lg font-semibold text-gray-900">定时任务配置</h3>
             <p className="mt-1 text-sm text-gray-600">
-              调度器会读取默认同步表和默认任务类型。推荐保留“仅同步数据”，发布继续走手动控制。
+              设置自动同步的时间计划与默认同步表。
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -697,28 +666,14 @@ export default function DashboardPage() {
                 }
                 className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
               />
-              <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-gray-500">
                 例如：`0 0 * * *` 表示每天凌晨执行一次。
               </p>
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-800">
-                默认任务类型
-              </label>
-              <select
-                value={configForm.defaultJobKind}
-                onChange={(event) =>
-                  setConfigForm({
-                    ...configForm,
-                    defaultJobKind: event.target.value as JobKind,
-                  })
-                }
-                className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
-              >
-                <option value="sync-data">sync-data</option>
-                <option value="sync-data-and-publish">sync-data-and-publish</option>
-              </select>
+              {payload.nextRunAt && (
+                <p className="mt-1 text-xs text-blue-600">
+                  下次执行：{formatTime(payload.nextRunAt)}
+                </p>
+              )}
             </div>
           </div>
 
@@ -785,13 +740,6 @@ export default function DashboardPage() {
                   >
                     {getStatusLabel(job.status)}
                   </span>
-                  {job.publishStatus && (
-                    <span
-                      className={`rounded px-2 py-1 font-medium ${getStatusBadgeClass(job.publishStatus)}`}
-                    >
-                      {getPublishStatusLabel(job.publishStatus)}
-                    </span>
-                  )}
                 </div>
               </div>
 
@@ -805,7 +753,6 @@ export default function DashboardPage() {
                 <div>附件处理：{job.includeAssets ? '开启' : '关闭'}</div>
                 <div>继续执行：{job.continueOnTableError ? '开启' : '关闭'}</div>
                 <div>同步完成：{formatTime(job.syncedAt)}</div>
-                <div>发布时间：{formatTime(job.publishedAt)}</div>
                 <div>开始时间：{formatTime(job.startedAt)}</div>
                 <div>结束时间：{formatTime(job.finishedAt)}</div>
               </div>
@@ -927,6 +874,26 @@ export default function DashboardPage() {
                   </div>
                 </div>
               )}
+
+              <div className="mt-4 border-t border-gray-100 pt-3">
+                <button
+                  onClick={() => void toggleJobLog(job.jobId)}
+                  className="text-sm text-blue-500 hover:underline"
+                >
+                  {loadingLog === job.jobId
+                    ? '加载中...'
+                    : expandedJobLog === job.jobId
+                    ? '收起日志'
+                    : '查看日志'}
+                </button>
+                {expandedJobLog === job.jobId && (
+                  <pre className="mt-2 max-h-80 overflow-auto rounded border border-gray-200 bg-gray-950 p-3 text-xs text-green-300 whitespace-pre-wrap">
+                    {(jobLogs[job.jobId] ?? []).length > 0
+                      ? jobLogs[job.jobId].join('\n')
+                      : '（暂无日志）'}
+                  </pre>
+                )}
+              </div>
             </article>
           ))}
         </div>

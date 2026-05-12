@@ -3,7 +3,16 @@ const MIN_SESSION_SECRET_BYTES = 32;
 const DEFAULT_PASSWORD = 'admin';
 
 function getPassword() {
-  return process.env.ADMIN_PASSWORD || DEFAULT_PASSWORD;
+  const password = process.env.ADMIN_PASSWORD || DEFAULT_PASSWORD;
+  if (
+    process.env.NODE_ENV === 'production' &&
+    password === DEFAULT_PASSWORD
+  ) {
+    console.warn(
+      '[Admin] ADMIN_PASSWORD is using the default value. Please set a strong password via the ADMIN_PASSWORD environment variable.',
+    );
+  }
+  return password;
 }
 
 export function getAdminCookieName() {

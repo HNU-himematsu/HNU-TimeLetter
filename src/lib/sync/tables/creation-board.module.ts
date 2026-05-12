@@ -1,10 +1,11 @@
-import type { CreationIdea } from '../../types';
+import type { CardHeaderInfo, CreationIdea } from '../../types';
 import type { TableSyncModule } from '../types';
 import { processAttachments } from '../shared/asset-processor';
 import { formatDateTime } from '../shared/dates';
-import { getAttachments, getPersonName, getText } from '../shared/field-reader';
+import { getAttachments, getText } from '../shared/field-reader';
 import { extractUrlsFromText, mergeTextWithUrls } from '../shared/text';
 import { writeCreationBoard } from '../writers/creation-board.writer';
+import { readLocalCreationBoardHeaders } from '../writers/creation-board-headers.writer';
 
 const contentTypeFieldName =
   '请选择你要添加的内容（该表可重复提交，如需填写多项，请再次提交）';
@@ -12,10 +13,14 @@ const contentTypeFieldName =
 export const creationBoardModule: TableSyncModule<'creation_board'> = {
   key: 'creation_board',
   label: '创作公示板',
+  dependsOn: ['creation_headers'],
   async run(ctx) {
     if (!ctx.settings.feishuCreationTableId) {
       throw new Error('缺少 FEISHU_CREATION_TABLE_ID，无法同步创作公示板');
     }
+
+    // 从本地文件读取头表数据（由 creation_headers 模块写入）
+    const headers: CardHeaderInfo[] = readLocalCreationBoardHeaders();
 
     const records = await ctx.services.feishuBitable.searchRecords(
       ctx.settings.feishuCreationTableId,
@@ -38,8 +43,7 @@ export const creationBoardModule: TableSyncModule<'creation_board'> = {
           const fields = record.fields;
           const cardId = getText(fields['CardID']) || getText(fields['自动编号']) || record.record_id;
           const contentType = getText(fields[contentTypeFieldName]);
-          const submitter = getPersonName(fields['提交人']);
-          const author = getText(fields['你的昵称']) || submitter;
+          const author = getText(fields['你的昵称']);
           const existingText = getText(fields['文本']).trim();
           const attachments = getAttachments(fields['请上传你的图片']);
 
@@ -59,8 +63,8 @@ export const creationBoardModule: TableSyncModule<'creation_board'> = {
           const mergedText = mergeTextWithUrls(existingText, imageUrls);
           if (
             ctx.includeAssets &&
-            mergedText !== existingText
-            && ctx.settings.feishuCreationTableId
+            mergedText !== existingText &&
+            ctx.settings.feishuCreationTableId
           ) {
             await ctx.services.feishuBitable.updateRecord(
               ctx.settings.feishuCreationTableId,
@@ -73,8 +77,7 @@ export const creationBoardModule: TableSyncModule<'creation_board'> = {
             id: record.record_id,
             cardId,
             content: mergedText || existingText,
-            author,
-            submitter,
+            author: author || '匿名',
             images: imageUrls,
             createdAt: formatDateTime(fields['提交时间']),
             tags: contentType,
@@ -111,6 +114,7 @@ export const creationBoardModule: TableSyncModule<'creation_board'> = {
         failedRecords,
         filesWritten: [filePath],
         creationIdeaCount: ideas.length,
+        headerCount: headers.length,
       },
       warnings,
     };

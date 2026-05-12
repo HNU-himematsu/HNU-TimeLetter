@@ -7,7 +7,7 @@ export async function syncFeishuData(): Promise<{
 }> {
   const job = await runSyncJob({
     kind: 'sync-data',
-    tables: ['locations', 'stories', 'creation_board'],
+    tables: ['locations', 'stories', 'creation_headers', 'creation_board'],
     dependencyMode: 'run_dependencies',
     includeAssets: true,
     continueOnTableError: false,

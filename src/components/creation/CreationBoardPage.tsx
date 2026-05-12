@@ -1,16 +1,17 @@
 'use client';
 
-import type { CreationIdea } from '@/lib/types';
+import type { CardHeaderInfo, CreationIdea } from '@/lib/types';
 import { groupIdeasToCards } from './utils';
 import CreationBoardHeader from './CreationBoardHeader';
 import CreationMasonry from './CreationMasonry';
 
 interface CreationBoardPageProps {
   ideas: CreationIdea[];
+  headers: CardHeaderInfo[];
 }
 
-export default function CreationBoardPage({ ideas }: CreationBoardPageProps) {
-  const cards = groupIdeasToCards(ideas);
+export default function CreationBoardPage({ ideas, headers }: CreationBoardPageProps) {
+  const cards = groupIdeasToCards(ideas, headers);
 
   return (
     <div className="relative min-h-screen bg-background">

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { checkAuth } from '@/lib/admin/auth';
-import { startSyncJob, stopSyncJob } from '@/lib/admin/scheduler';
+import { startSyncJob, stopSyncJob, getNextRunAt } from '@/lib/admin/scheduler';
 import { getSyncConfig, updateSyncConfig } from '@/lib/sync/config';
 import { getRuntimeSummary } from '@/lib/sync/job-store';
 import {
@@ -18,6 +18,7 @@ export async function GET() {
     config: getSyncConfig(),
     runtime: getRuntimeSummary(),
     availableTables: getSyncTableDefinitions(),
+    nextRunAt: getNextRunAt(),
   });
 }
 
@@ -46,6 +47,7 @@ export async function PATCH(request: Request) {
       config: nextConfig,
       runtime: getRuntimeSummary(),
       availableTables: getSyncTableDefinitions(),
+      nextRunAt: getNextRunAt(),
     });
   } catch (error) {
     if (error instanceof SyncValidationError) {
