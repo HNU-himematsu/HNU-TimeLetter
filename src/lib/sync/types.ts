@@ -79,7 +79,7 @@ export interface SyncJobRecord {
   dependencyMode: DependencyMode;
   includeAssets: boolean;
   continueOnTableError: boolean;
-  triggeredBy: 'admin-ui' | 'scheduler' | 'cli';
+  triggeredBy: 'admin-ui' | 'scheduler' | 'cli' | 'webhook';
   note?: string;
   createdAt: string;
   startedAt?: string;
@@ -198,7 +198,7 @@ export interface SyncContext {
 }
 
 export interface TableSyncResult<
-  TKey extends SyncTableKey = SyncTableKey,
+  TKey extends keyof SyncTableOutputMap = keyof SyncTableOutputMap,
   TOutput = SyncTableOutputMap[TKey],
 > {
   output?: TOutput;
