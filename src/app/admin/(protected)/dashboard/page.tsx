@@ -675,6 +675,7 @@ export default function DashboardPage() {
                 </p>
               )}
             </div>
+          </div>
 
           <div>
             <div className="mb-2 text-sm font-medium text-gray-800">默认同步表</div>

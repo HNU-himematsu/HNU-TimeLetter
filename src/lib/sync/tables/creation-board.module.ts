@@ -1,8 +1,8 @@
-import type { CreationIdea } from '../../types';
+import type { CardHeaderInfo, CreationIdea } from '../../types';
 import type { TableSyncModule } from '../types';
 import { processAttachments } from '../shared/asset-processor';
 import { formatDateTime } from '../shared/dates';
-import { getAttachments, getPersonName, getText } from '../shared/field-reader';
+import { getAttachments, getText } from '../shared/field-reader';
 import { extractUrlsFromText, mergeTextWithUrls } from '../shared/text';
 import { writeCreationBoard } from '../writers/creation-board.writer';
 
@@ -15,6 +15,29 @@ export const creationBoardModule: TableSyncModule<'creation_board'> = {
   async run(ctx) {
     if (!ctx.settings.feishuCreationTableId) {
       throw new Error('缺少 FEISHU_CREATION_TABLE_ID，无法同步创作公示板');
+    }
+
+    // 读取头表（CARDID -> 地点/角色），允许头表不存在时降级
+    const headers: CardHeaderInfo[] = [];
+    if (ctx.settings.feishuCreationHeaderTableId) {
+      try {
+        const headerRecords = await ctx.services.feishuBitable.listRecords(
+          ctx.settings.feishuCreationHeaderTableId,
+        );
+        for (const record of headerRecords) {
+          const cardId = getText(record.fields['CARDID']).trim();
+          if (!cardId) continue;
+          headers.push({
+            cardId,
+            location: getText(record.fields['地点']).trim(),
+            character: getText(record.fields['角色']).trim(),
+          });
+        }
+      } catch (e) {
+        ctx.logger.warn(
+          `头表同步失败，跳过地点/角色数据: ${e instanceof Error ? e.message : String(e)}`,
+        );
+      }
     }
 
     const records = await ctx.services.feishuBitable.searchRecords(
@@ -38,8 +61,7 @@ export const creationBoardModule: TableSyncModule<'creation_board'> = {
           const fields = record.fields;
           const cardId = getText(fields['CardID']) || getText(fields['自动编号']) || record.record_id;
           const contentType = getText(fields[contentTypeFieldName]);
-          const submitter = getPersonName(fields['提交人']);
-          const author = getText(fields['你的昵称']) || submitter;
+          const author = getText(fields['你的昵称']);
           const existingText = getText(fields['文本']).trim();
           const attachments = getAttachments(fields['请上传你的图片']);
 
@@ -59,8 +81,8 @@ export const creationBoardModule: TableSyncModule<'creation_board'> = {
           const mergedText = mergeTextWithUrls(existingText, imageUrls);
           if (
             ctx.includeAssets &&
-            mergedText !== existingText
-            && ctx.settings.feishuCreationTableId
+            mergedText !== existingText &&
+            ctx.settings.feishuCreationTableId
           ) {
             await ctx.services.feishuBitable.updateRecord(
               ctx.settings.feishuCreationTableId,
@@ -73,8 +95,7 @@ export const creationBoardModule: TableSyncModule<'creation_board'> = {
             id: record.record_id,
             cardId,
             content: mergedText || existingText,
-            author,
-            submitter,
+            author: author || '匿名',
             images: imageUrls,
             createdAt: formatDateTime(fields['提交时间']),
             tags: contentType,
@@ -99,7 +120,7 @@ export const creationBoardModule: TableSyncModule<'creation_board'> = {
 
     ideas.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
-    const filePath = writeCreationBoard(ideas);
+    const filePath = writeCreationBoard(ideas, headers);
 
     return {
       output: ideas,
@@ -111,6 +132,7 @@ export const creationBoardModule: TableSyncModule<'creation_board'> = {
         failedRecords,
         filesWritten: [filePath],
         creationIdeaCount: ideas.length,
+        headerCount: headers.length,
       },
       warnings,
     };

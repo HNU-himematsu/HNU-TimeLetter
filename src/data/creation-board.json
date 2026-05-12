@@ -5,30 +5,25 @@
       "cardId": "CARD001",
       "content": "今天突然有了一个关于宇宙探索的灵感",
       "author": "张三",
-      "submitter": "aki",
       "images": [],
       "createdAt": "2026-04-17T11:46:34.000Z",
       "tags": "灵感"
-    },
-    {
-      "id": "recIKkR1fxeC1L",
-      "cardId": "CARD002",
-      "content": "小时候和爷爷一起去海边的故事",
-      "author": "李四",
-      "submitter": "aki",
-      "images": [],
-      "createdAt": "2026-04-17T11:46:34.000Z",
-      "tags": "故事"
     },
     {
       "id": "recJkei9PNqiw1",
       "cardId": "CARD003",
       "content": "夕阳下金色沙滩上的海鸥和海浪",
       "author": "王五",
-      "submitter": "aki",
       "images": [],
       "createdAt": "2026-04-17T11:46:34.000Z",
       "tags": "画面描述"
+    }
+  ],
+  "headers": [
+    {
+      "cardId": "CARD001",
+      "location": "图书馆",
+      "character": "姬松"
     }
   ]
 }

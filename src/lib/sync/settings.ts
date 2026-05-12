@@ -7,6 +7,7 @@ const DEFAULT_FEISHU_LOCATIONS_TABLE_ID = 'tblaMWD1PV9lwXDr';
 const DEFAULT_FEISHU_OSS_TABLE_ID = 'tblwLUNdWNzv1kZw';
 const DEFAULT_FEISHU_CREATION_TABLE_ID = 'tblKNYCf641UMSUe';
 const DEFAULT_FEISHU_CREATION_VIEW_ID = 'vewbLA6eBY';
+const DEFAULT_FEISHU_CREATION_HEADER_TABLE_ID = 'tblGfb0GabFjHWB8';
 
 let envLoaded = false;
 
@@ -36,6 +37,8 @@ export function getSyncEnvironmentSettings(): SyncEnvironmentSettings {
       process.env.FEISHU_CREATION_TABLE_ID || DEFAULT_FEISHU_CREATION_TABLE_ID,
     feishuCreationViewId:
       process.env.FEISHU_CREATION_VIEW_ID || DEFAULT_FEISHU_CREATION_VIEW_ID,
+    feishuCreationHeaderTableId:
+      process.env.FEISHU_CREATION_HEADER_TABLE_ID || DEFAULT_FEISHU_CREATION_HEADER_TABLE_ID,
     feishuOssTableId: process.env.FEISHU_OSS_TABLE_ID || DEFAULT_FEISHU_OSS_TABLE_ID,
     feishuLocationsTableId:
       process.env.FEISHU_LOCATIONS_TABLE_ID || DEFAULT_FEISHU_LOCATIONS_TABLE_ID,

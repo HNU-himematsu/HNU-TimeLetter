@@ -114,6 +114,7 @@ export interface SyncEnvironmentSettings {
   feishuViewId?: string;
   feishuCreationTableId?: string;
   feishuCreationViewId?: string;
+  feishuCreationHeaderTableId?: string;
   feishuOssTableId?: string;
   feishuLocationsTableId?: string;
   feishuContributorsTableId?: string;

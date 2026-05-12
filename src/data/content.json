@@ -58,18 +58,7 @@
       "name": "test",
       "x": 20,
       "y": 50,
-      "stories": [
-        {
-          "id": "recvb7QYRdG1mm",
-          "characterId": "char-003",
-          "characterName": "月见栞",
-          "avatarUrl": "https://himematsu.oss-cn-guangzhou.aliyuncs.com/hnu-timeletter/0bcef223f26bfd51ad72cdd855099e45.png",
-          "mainImageUrl": "https://himematsu.oss-cn-guangzhou.aliyuncs.com/hnu-timeletter/6e0168a2fe87eb75c8f0c1a63acfa531.jpg",
-          "content": "12345",
-          "author": "12344",
-          "locationId": "aaa"
-        }
-      ]
+      "stories": []
     },
     {
       "id": "loc-580934",
