@@ -18,12 +18,5 @@
       "createdAt": "2026-04-17T11:46:34.000Z",
       "tags": "画面描述"
     }
-  ],
-  "headers": [
-    {
-      "cardId": "CARD001",
-      "location": "图书馆",
-      "character": "姬松"
-    }
   ]
 }

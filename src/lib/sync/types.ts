@@ -5,7 +5,7 @@ export type DataPublishMode = 'build_time' | 'runtime_api';
 
 export type SyncJobKind = 'sync-data' | 'sync-data-and-publish';
 
-export type SyncTableKey = 'locations' | 'stories' | 'creation_board' | 'contributors';
+export type SyncTableKey = 'locations' | 'stories' | 'creation_board' | 'creation_headers' | 'contributors';
 
 export type DependencyMode = 'read_local' | 'run_dependencies' | 'strict';
 

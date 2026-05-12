@@ -5,6 +5,7 @@ import { formatDateTime } from '../shared/dates';
 import { getAttachments, getText } from '../shared/field-reader';
 import { extractUrlsFromText, mergeTextWithUrls } from '../shared/text';
 import { writeCreationBoard } from '../writers/creation-board.writer';
+import { readLocalCreationBoardHeaders } from '../writers/creation-board-headers.writer';
 
 const contentTypeFieldName =
   '请选择你要添加的内容（该表可重复提交，如需填写多项，请再次提交）';
@@ -12,33 +13,14 @@ const contentTypeFieldName =
 export const creationBoardModule: TableSyncModule<'creation_board'> = {
   key: 'creation_board',
   label: '创作公示板',
+  dependsOn: ['creation_headers'],
   async run(ctx) {
     if (!ctx.settings.feishuCreationTableId) {
       throw new Error('缺少 FEISHU_CREATION_TABLE_ID，无法同步创作公示板');
     }
 
-    // 读取头表（CARDID -> 地点/角色），允许头表不存在时降级
-    const headers: CardHeaderInfo[] = [];
-    if (ctx.settings.feishuCreationHeaderTableId) {
-      try {
-        const headerRecords = await ctx.services.feishuBitable.listRecords(
-          ctx.settings.feishuCreationHeaderTableId,
-        );
-        for (const record of headerRecords) {
-          const cardId = getText(record.fields['CARDID']).trim();
-          if (!cardId) continue;
-          headers.push({
-            cardId,
-            location: getText(record.fields['地点']).trim(),
-            character: getText(record.fields['角色']).trim(),
-          });
-        }
-      } catch (e) {
-        ctx.logger.warn(
-          `头表同步失败，跳过地点/角色数据: ${e instanceof Error ? e.message : String(e)}`,
-        );
-      }
-    }
+    // 从本地文件读取头表数据（由 creation_headers 模块写入）
+    const headers: CardHeaderInfo[] = readLocalCreationBoardHeaders();
 
     const records = await ctx.services.feishuBitable.searchRecords(
       ctx.settings.feishuCreationTableId,
@@ -120,7 +102,7 @@ export const creationBoardModule: TableSyncModule<'creation_board'> = {
 
     ideas.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
-    const filePath = writeCreationBoard(ideas, headers);
+    const filePath = writeCreationBoard(ideas);
 
     return {
       output: ideas,
