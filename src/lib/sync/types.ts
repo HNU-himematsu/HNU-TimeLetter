@@ -46,7 +46,7 @@ export interface SyncRunRequest {
   dependencyMode?: DependencyMode;
   includeAssets?: boolean;
   continueOnTableError?: boolean;
-  triggeredBy?: 'admin-ui' | 'scheduler' | 'cli';
+  triggeredBy?: 'admin-ui' | 'scheduler' | 'cli' | 'webhook';
   note?: string;
 }
 

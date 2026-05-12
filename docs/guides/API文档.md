@@ -1,8 +1,8 @@
 # 后台管理 API 文档
 
-> 版本：v1.0
+> 版本：v1.1
 > Base URL：`/api/admin`
-> 所有接口（登录除外）需通过 Cookie 鉴权
+> 普通接口需通过 Cookie 鉴权；Webhook 接口使用 Bearer Token 鉴权
 
 ---
 
@@ -12,8 +12,9 @@
 - [登录接口](#2-登录接口)
 - [同步配置接口](#3-同步配置接口)
 - [同步任务接口](#4-同步任务接口)
-- [错误码一览](#5-错误码一览)
-- [数据类型定义](#6-数据类型定义)
+- [Webhook 接口](#5-webhook-接口飞书自动化)
+- [错误码一览](#6-错误码一览)
+- [数据类型定义](#7-数据类型定义)
 
 ---
 
@@ -505,7 +506,78 @@ GET /api/admin/sync/jobs?limit=10
 
 ---
 
-## 5. 错误码一览
+## 5. Webhook 接口（飞书自动化）
+
+### 5.1 POST /api/admin/sync/webhook — 飞书自动化触发同步
+
+**不需要 Cookie，使用 Bearer Token 鉴权。**
+
+专为飞书自动化设计：当飞书多维表格有新记录时，自动触发 `creation_board` 同步。任务异步执行，接口立即返回。
+
+**鉴权方式（任选其一）**
+
+| 方式 | 示例 | 说明 |
+|---|---|---|
+| 请求头 | `Authorization: Bearer <SYNC_WEBHOOK_SECRET>` | 推荐，密锁不暗藏在 URL 中 |
+| 查询参数 | `?secret=<SYNC_WEBHOOK_SECRET>` | 适用于不支持自定义 Header 的飞书自动化配置 |
+
+**密镰来源**：环境变量 `SYNC_WEBHOOK_SECRET`（优先），未设置时回退使用 `ADMIN_PASSWORD`。
+
+> 建议单独设置 `SYNC_WEBHOOK_SECRET`，避免将管理员密码暗藏在 URL 日志中。
+
+**请求体**：可为空，也可以是飞书自动化传递的任意 JSON（服务端不使用请求体内容）。
+
+**成功响应** `202 Accepted`
+
+```json
+{
+  "jobId": "sync_20260430100000_ab12cd",
+  "status": "queued",
+  "message": "同步任务已创建"
+}
+```
+
+**鉴权失败** `401 Unauthorized`
+
+```json
+{ "message": "Unauthorized" }
+```
+
+**任务冲突** `409 Conflict`（已有任务运行中）
+
+```json
+{
+  "message": "已有同步任务运行中，请等待完成后重试",
+  "currentJobId": "sync_20260430095900_xy99"
+}
+```
+
+**限流** `429 Too Many Requests`（每个 IP 每小时最多 60 次）
+
+```json
+{ "message": "请求过于频繁，请稍后重试" }
+```
+
+**飞书自动化配置示例**
+
+在飞书自动化中，选择「发送 HTTP 请求」动作，配置如下：
+
+| 配置项 | 内容 |
+|---|---|
+| 请求方法 | `POST` |
+| URL | `https://himematsu.cn/api/admin/sync/webhook` |
+| 请求头 | `Authorization: Bearer <SYNC_WEBHOOK_SECRET>` |
+| 请求体 | 空即可 |
+
+或使用查询参数方式（不支持自定义 Header 时）：
+
+```
+https://himematsu.cn/api/admin/sync/webhook?secret=<SYNC_WEBHOOK_SECRET>
+```
+
+---
+
+## 6. 错误码一览
 
 | 状态码 | 含义 | 场景 |
 |---|---|---|
