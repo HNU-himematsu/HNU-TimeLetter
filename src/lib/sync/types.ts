@@ -181,6 +181,7 @@ export interface SyncTableOutputMap {
   locations: LocationCoords;
   stories: LocationPoint[];
   creation_board: CreationIdea[];
+  creation_headers: import('../types').CardHeaderInfo[];
   contributors: import('../types').Contributor[];
 }
 
