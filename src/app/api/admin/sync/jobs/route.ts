@@ -15,8 +15,9 @@ export async function GET(request: NextRequest) {
   }
 
   const limit = Number(request.nextUrl.searchParams.get('limit') || 20);
+  const clampedLimit = Number.isFinite(limit) && limit > 0 ? Math.min(limit, 100) : 20;
   return NextResponse.json({
-    items: getSyncJobs(Number.isFinite(limit) && limit > 0 ? limit : 20),
+    items: getSyncJobs(clampedLimit),
   });
 }
 

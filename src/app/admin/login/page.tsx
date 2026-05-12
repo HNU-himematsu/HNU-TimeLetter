@@ -7,20 +7,44 @@ import { Button } from '@/components/ui/button';
 export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await fetch('/api/admin/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password }),
-    });
+    if (loading) return;
 
-    if (res.ok) {
-      router.push('/admin/dashboard');
-    } else {
-      setError('密码错误');
+    setLoading(true);
+    setError('');
+
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+
+      if (res.ok) {
+        router.push('/admin/dashboard');
+        return;
+      }
+
+      const data = (await res.json()) as { message?: string; retryAfterSeconds?: number };
+
+      if (res.status === 429) {
+        const seconds = data.retryAfterSeconds;
+        setError(
+          seconds
+            ? `登录尝试过多，请 ${seconds} 秒后重试`
+            : '登录尝试过多，请稍后重试',
+        );
+      } else {
+        setError('密码错误');
+      }
+    } catch {
+      setError('网络请求失败，请稍后重试');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -35,8 +59,11 @@ export default function LoginPage() {
           onChange={(e) => setPassword(e.target.value)}
           placeholder="请输入密码"
           className="w-full p-2 border rounded mb-4"
+          disabled={loading}
         />
-        <Button type="submit" className="w-full">登录</Button>
+        <Button type="submit" className="w-full" disabled={loading}>
+          {loading ? '登录中...' : '登录'}
+        </Button>
       </form>
     </div>
   );

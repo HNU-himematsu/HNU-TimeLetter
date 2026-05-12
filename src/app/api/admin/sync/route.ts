@@ -1,3 +1,10 @@
+/**
+ * @deprecated 该路由为兼容旧版调用保留，不推荐使用。
+ * 请使用以下新接口：
+ *   - 触发同步任务：POST /api/admin/sync/jobs
+ *   - 读取/修改调度配置：GET/PATCH /api/admin/sync/config
+ * 旧版 action=trigger / action=update 的请求形态仍可用，但不再迭代新功能。
+ */
 import { NextResponse } from 'next/server';
 import { checkAuth } from '@/lib/admin/auth';
 import { startSyncJob, stopSyncJob } from '@/lib/admin/scheduler';

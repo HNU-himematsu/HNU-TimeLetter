@@ -20,6 +20,7 @@ type TableDefinition = {
 
 type ConfigResponse = SyncConfigResponse & {
   availableTables: TableDefinition[];
+  nextRunAt?: string | null;
 };
 
 type Job = SyncJobRecord;
@@ -163,6 +164,9 @@ export default function DashboardPage() {
   const [savingConfig, setSavingConfig] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [notice, setNotice] = useState<NoticeState>(null);
+  const [expandedJobLog, setExpandedJobLog] = useState<string | null>(null);
+  const [jobLogs, setJobLogs] = useState<Record<string, string[]>>({});
+  const [loadingLog, setLoadingLog] = useState<string | null>(null);
 
   const fetchData = async (showRefreshing = false) => {
     if (showRefreshing) {
@@ -387,6 +391,27 @@ export default function DashboardPage() {
       });
     } finally {
       setSavingConfig(false);
+    }
+  };
+
+  const toggleJobLog = async (jobId: string) => {
+    if (expandedJobLog === jobId) {
+      setExpandedJobLog(null);
+      return;
+    }
+    setExpandedJobLog(jobId);
+    if (jobLogs[jobId]) return;
+    setLoadingLog(jobId);
+    try {
+      const res = await fetch(`/api/admin/sync/jobs/${jobId}/logs`, { cache: 'no-store' });
+      if (res.ok) {
+        const data = (await res.json()) as { lines: string[]; total: number };
+        setJobLogs((prev) => ({ ...prev, [jobId]: data.lines }));
+      }
+    } catch {
+      setJobLogs((prev) => ({ ...prev, [jobId]: ['（日志加载失败）'] }));
+    } finally {
+      setLoadingLog(null);
     }
   };
 
@@ -697,9 +722,14 @@ export default function DashboardPage() {
                 }
                 className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
               />
-              <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-gray-500">
                 例如：`0 0 * * *` 表示每天凌晨执行一次。
               </p>
+              {payload.nextRunAt && (
+                <p className="mt-1 text-xs text-blue-600">
+                  下次执行：{formatTime(payload.nextRunAt)}
+                </p>
+              )}
             </div>
 
             <div>
@@ -927,6 +957,26 @@ export default function DashboardPage() {
                   </div>
                 </div>
               )}
+
+              <div className="mt-4 border-t border-gray-100 pt-3">
+                <button
+                  onClick={() => void toggleJobLog(job.jobId)}
+                  className="text-sm text-blue-500 hover:underline"
+                >
+                  {loadingLog === job.jobId
+                    ? '加载中...'
+                    : expandedJobLog === job.jobId
+                    ? '收起日志'
+                    : '查看日志'}
+                </button>
+                {expandedJobLog === job.jobId && (
+                  <pre className="mt-2 max-h-80 overflow-auto rounded border border-gray-200 bg-gray-950 p-3 text-xs text-green-300 whitespace-pre-wrap">
+                    {(jobLogs[job.jobId] ?? []).length > 0
+                      ? jobLogs[job.jobId].join('\n')
+                      : '（暂无日志）'}
+                  </pre>
+                )}
+              </div>
             </article>
           ))}
         </div>

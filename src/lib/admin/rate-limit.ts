@@ -1,6 +1,7 @@
 const MAX_FAILURES = 5;
 const WINDOW_MS = 60 * 60 * 1000;
 const COOLDOWN_MS = 30 * 60 * 1000;
+const CLEANUP_INTERVAL_MS = 60 * 60 * 1000;
 
 type LoginAttemptRecord = {
   failures: number;
@@ -9,6 +10,22 @@ type LoginAttemptRecord = {
 };
 
 const loginAttempts = new Map<string, LoginAttemptRecord>();
+
+// 定期清理已过期的限流记录，防止内存持续增长
+if (typeof setInterval !== 'undefined') {
+  setInterval(() => {
+    const now = Date.now();
+    for (const [key, record] of loginAttempts.entries()) {
+      const expired =
+        record.cooldownUntil > 0
+          ? record.cooldownUntil <= now
+          : now - record.firstFailureAt > WINDOW_MS;
+      if (expired) {
+        loginAttempts.delete(key);
+      }
+    }
+  }, CLEANUP_INTERVAL_MS).unref?.();
+}
 
 export type LoginRateLimitState = {
   allowed: boolean;

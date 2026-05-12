@@ -49,6 +49,12 @@ export function stopSyncJob() {
   }
 }
 
+export function getNextRunAt(): string | null {
+  if (!syncJob) return null;
+  const next = syncJob.nextInvocation();
+  return next ? next.toISOString() : null;
+}
+
 export async function runSyncTask() {
   const config = getSyncConfig();
   return runSyncJob({
