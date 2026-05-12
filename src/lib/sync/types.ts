@@ -1,11 +1,12 @@
-import type { CreationIdea, LocationPoint } from '../types';
+import type { CardHeaderInfo, Contributor, CreationIdea, LocationPoint } from '../types';
 import type { SyncLogger } from './logger';
 
 export type DataPublishMode = 'build_time' | 'runtime_api';
 
 export type SyncJobKind = 'sync-data' | 'sync-data-and-publish';
 
-export type SyncTableKey = 'locations' | 'stories' | 'creation_board' | 'creation_headers' | 'contributors';
+/** 从 SyncTableOutputMap 派生，确保二者永远一致，新增同步表只需扩展 SyncTableOutputMap。 */
+export type SyncTableKey = keyof SyncTableOutputMap;
 
 export type DependencyMode = 'read_local' | 'run_dependencies' | 'strict';
 
@@ -181,8 +182,8 @@ export interface SyncTableOutputMap {
   locations: LocationCoords;
   stories: LocationPoint[];
   creation_board: CreationIdea[];
-  creation_headers: import('../types').CardHeaderInfo[];
-  contributors: import('../types').Contributor[];
+  creation_headers: CardHeaderInfo[];
+  contributors: Contributor[];
 }
 
 export interface SyncContext {
