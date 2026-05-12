@@ -29,7 +29,7 @@ export default function ProtectedLayout({
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
+    <div className="h-screen overflow-hidden bg-gray-100 flex">
       <aside className="w-64 bg-white shadow-md flex flex-col fixed h-full z-10">
         <div className="p-6 border-b">
           <h1 className="mb-0 text-xl font-bold">与她的海大时光笺</h1>
@@ -66,7 +66,7 @@ export default function ProtectedLayout({
           </button>
         </div>
       </aside>
-      <main className="flex-1 ml-64 p-8 overflow-auto">
+      <main className="flex-1 ml-64 p-8 overflow-y-auto h-full">
         {children}
       </main>
     </div>
