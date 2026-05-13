@@ -7,6 +7,7 @@ import { useState } from 'react';
 const navItems = [
   { href: '/admin/dashboard', label: '控制台 (Dashboard)' },
   { href: '/admin/content', label: '内容数据 (Content)' },
+  { href: '/admin/announcement', label: '公告配置 (Announcement)' },
 ];
 
 export default function ProtectedLayout({

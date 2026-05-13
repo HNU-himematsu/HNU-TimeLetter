@@ -34,7 +34,7 @@ const ITEMS: { key: NavKey; label: string }[] = [
 export function GlobalNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { setEnvelopeOpened, setIntroReady } = useAppStore();
+  const { setEnvelopeOpened, setIntroReady, openAnnouncement } = useAppStore();
   const shouldReduceMotion = useReducedMotion();
 
   // 不在后台管理路由下渲染
@@ -144,11 +144,10 @@ export function GlobalNav() {
         </LayoutGroup>
 
         {/* 公告圆形按钮：直径与胶囊同宽，磨砂亚克力 + 红色描边，hover 变实心红 */}
-        <motion.a
-          href="https://himematsu.feishu.cn/docx/EbsDdehuLo1801xBzb1cxzJLnHb"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="公告"
+        <motion.button
+          type="button"
+          onClick={openAnnouncement}
+          aria-label="活动公告"
           className="relative flex items-center justify-center rounded-full border backdrop-blur-md shadow-sm font-serif tracking-[0.18em]"
           style={{
             width: 'clamp(44px, 4vw, 64px)',
@@ -162,7 +161,7 @@ export function GlobalNav() {
           transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.2 }}
         >
           公告
-        </motion.a>
+        </motion.button>
       </div>
     </div>
   );

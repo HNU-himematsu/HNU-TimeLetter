@@ -10,16 +10,16 @@ import { Footer } from '@/components/sections/Footer';
 import { CustomScrollbar } from '@/components/shared/CustomScrollbar';
 
 export default function Home() {
-  const { isIntroReady, isTransitioning } = useAppStore();
+  const { isIntroReady, isTransitioning, isAnnouncementOpen } = useAppStore();
   const isMobile = useIsMobile();
   const [mounted, setMounted] = useState(false);
 
   // 开屏入场动画期间禁止下滑：仅在入场动画播完且未处于跳转过渡时启用 Lenis 与自定义滑块
   const lenis = useVirtualScroll(
-    mounted && !isMobile && isIntroReady && !isTransitioning,
+    mounted && !isMobile && isIntroReady && !isTransitioning && !isAnnouncementOpen,
   );
   const scrollbarEnabled =
-    mounted && !isMobile && isIntroReady && !isTransitioning;
+    mounted && !isMobile && isIntroReady && !isTransitioning && !isAnnouncementOpen;
 
   // 避免 SSR Hydration 问题
   useEffect(() => {

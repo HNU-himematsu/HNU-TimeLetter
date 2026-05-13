@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { GlobalNav } from "@/components/shared/GlobalNav";
 import { TransitionOverlay } from "@/components/shared/TransitionOverlay";
+import { FeishuDocModal } from "@/components/shared/FeishuDocModal";
 import { ContentStoreProvider } from "@/lib/content-store";
 
 const displayFont = localFont({
@@ -66,6 +67,7 @@ export default function RootLayout({
             {children}
             <GlobalNav />
             <TransitionOverlay />
+            <FeishuDocModal />
           </ContentStoreProvider>
         </div>
         {/*

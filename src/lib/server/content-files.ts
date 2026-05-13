@@ -2,6 +2,7 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import contentJson from '@/data/content.json';
 import creationBoardJson from '@/data/creation-board.json';
+import creationBoardHeadersJson from '@/data/creation-board-headers.json';
 import contributorsJson from '@/data/contributors.json';
 import {
   type ContentData,
@@ -39,7 +40,9 @@ export async function getCreationBoardData(): Promise<CreationBoardData> {
   ]);
 
   const ideas = ideasRaw ? (JSON.parse(ideasRaw) as { ideas?: unknown }).ideas : (creationBoardJson as { ideas?: unknown }).ideas;
-  const headers = headersRaw ? (JSON.parse(headersRaw) as { headers?: unknown }).headers : [];
+  const headers = headersRaw
+    ? (JSON.parse(headersRaw) as { headers?: unknown }).headers
+    : (creationBoardHeadersJson as { headers?: unknown }).headers;
 
   return validateCreationBoardData({ ideas: ideas ?? [], headers: headers ?? [] });
 }
