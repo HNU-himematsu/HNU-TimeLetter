@@ -5,6 +5,7 @@ import { AboutProject } from './AboutProject';
 import { AboutUs } from './AboutUs';
 import { Credits } from './Credits';
 import { GuideLine } from '@/components/shared/GuideLine';
+import { useIsMobile } from '@/lib/hooks';
 
 /**
  * ScrollSections — 下滚页面群包装组件
@@ -24,11 +25,12 @@ export function ScrollSections() {
   const aboutProjectRef = useRef<HTMLDivElement>(null);
   const aboutUsRef = useRef<HTMLDivElement>(null);
   const creditsRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   return (
     <div className="relative page-paper">
-      {/* 红色引导线 — z-[1]，在背景上方、文字下方 */}
-      <GuideLine sectionRefs={[aboutProjectRef, aboutUsRef, creditsRef]} />
+      {/* 红色引导线 — z-[1]，在背景上方、文字下方；移动端不显示 */}
+      {!isMobile && <GuideLine sectionRefs={[aboutProjectRef, aboutUsRef, creditsRef]} />}
 
       {/* 三个全屏页面 — 背景透明，文字内容 z-[10] 在引导线上方 */}
       <div ref={aboutProjectRef} className="relative">

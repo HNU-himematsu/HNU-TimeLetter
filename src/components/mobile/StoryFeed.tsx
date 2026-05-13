@@ -28,7 +28,7 @@ function StoryCard({ story, onClick }: { story: Story; onClick: () => void }) {
       onClick={onClick}
       whileTap={shouldReduceMotion ? {} : { scale: 0.96 }}
     >
-      <div className="relative w-full min-h-40 bg-stone-100">
+      <div className="relative w-full bg-stone-100">
         <Image
           src={getStoryMainImageUrl(story)}
           alt={story.characterName}
