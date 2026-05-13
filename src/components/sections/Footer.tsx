@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { useAppStore } from '@/lib/store';
 
 /**
  * 页脚 (Footer)
@@ -23,14 +24,15 @@ import Image from 'next/image';
 interface FooterLink {
   title: string;
   description: string;
-  href: string;
+  href?: string;
+  onModal?: 'announcement';
 }
 
 const FOOTER_LINKS: FooterLink[] = [
   {
     title: '活动公告',
     description: '活动参与方式介绍',
-    href: 'https://himematsu.feishu.cn/docx/EbsDdehuLo1801xBzb1cxzJLnHb',
+    onModal: 'announcement',
   },
   {
     title: 'QQ 活动群',
@@ -50,6 +52,8 @@ const FOOTER_LINKS: FooterLink[] = [
 ];
 
 export function Footer() {
+  const { openAnnouncement } = useAppStore();
+
   return (
     <footer
       className="fixed bottom-0 left-0 right-0 z-0"
@@ -58,28 +62,50 @@ export function Footer() {
       {/* ─── 大页脚导航 ─── */}
       <nav className="w-full max-w-7xl mx-auto px-6 md:px-24 py-5">
         <div className="flex flex-wrap gap-14 justify-center md:justify-start">
-          {FOOTER_LINKS.map((link) => (
-            <a
-              key={link.title}
-              href={link.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group flex flex-col gap-2.5 py-3.5 px-8 rounded-lg hover:bg-white/10 transition-colors"
-            >
-              <span
-                className="text-xl font-sans tracking-wide"
-                style={{ color: '#ECE9E4' }}
+          {FOOTER_LINKS.map((link) =>
+            link.onModal === 'announcement' ? (
+              <button
+                key={link.title}
+                type="button"
+                onClick={openAnnouncement}
+                className="group flex flex-col gap-2.5 py-3.5 px-8 rounded-lg hover:bg-white/10 transition-colors text-left"
               >
-                {link.title}
-              </span>
-              <span
-                className="text-sm font-sans"
-                style={{ color: 'rgba(236, 233, 228, 0.9)' }}
+                <span
+                  className="text-xl font-sans tracking-wide"
+                  style={{ color: '#ECE9E4' }}
+                >
+                  {link.title}
+                </span>
+                <span
+                  className="text-sm font-sans"
+                  style={{ color: 'rgba(236, 233, 228, 0.9)' }}
+                >
+                  {link.description}
+                </span>
+              </button>
+            ) : (
+              <a
+                key={link.title}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex flex-col gap-2.5 py-3.5 px-8 rounded-lg hover:bg-white/10 transition-colors"
               >
-                {link.description}
-              </span>
-            </a>
-          ))}
+                <span
+                  className="text-xl font-sans tracking-wide"
+                  style={{ color: '#ECE9E4' }}
+                >
+                  {link.title}
+                </span>
+                <span
+                  className="text-sm font-sans"
+                  style={{ color: 'rgba(236, 233, 228, 0.9)' }}
+                >
+                  {link.description}
+                </span>
+              </a>
+            )
+          )}
         </div>
       </nav>
 

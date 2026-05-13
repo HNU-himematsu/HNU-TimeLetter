@@ -13,6 +13,11 @@ interface AppState {
   // 为 false 时锁定页面纵向滚动，避免用户在丝带显影/信封飘落期间下滑
   isIntroReady: boolean;
   setIntroReady: (ready: boolean) => void;
+
+  // 活动公告飞书文档弹窗
+  isAnnouncementOpen: boolean;
+  openAnnouncement: () => void;
+  closeAnnouncement: () => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -24,4 +29,8 @@ export const useAppStore = create<AppState>((set) => ({
 
   isIntroReady: false,
   setIntroReady: (ready) => set({ isIntroReady: ready }),
+
+  isAnnouncementOpen: false,
+  openAnnouncement: () => set({ isAnnouncementOpen: true }),
+  closeAnnouncement: () => set({ isAnnouncementOpen: false }),
 }));
