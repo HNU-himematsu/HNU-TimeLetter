@@ -37,6 +37,7 @@ declare global {
       config?: Record<string, unknown>;
       size?: { width?: string | number; height?: string | number; minHeight?: string | number };
       theme?: 'light' | 'dark';
+      onAuthError?: (err: unknown) => void;
       onError?: (err: unknown) => void;
       onMountSuccess?: () => void;
     }) => {
@@ -135,15 +136,13 @@ function loadSdk(): Promise<void> {
 
 interface PreloadState {
   config: AnnouncementConfigResponse | null;
-  auth: JsapiSignatureResponse | null;
-  authFetchedAt: number;
 }
 
 export function FeishuDocModal() {
   const { isAnnouncementOpen, closeAnnouncement } = useAppStore();
   const mountRef = useRef<HTMLDivElement>(null);
   const instanceRef = useRef<DocComponentInstance | null>(null);
-  const preloadRef = useRef<PreloadState>({ config: null, auth: null, authFetchedAt: 0 });
+  const preloadRef = useRef<PreloadState>({ config: null });
   const initVersionRef = useRef(0);
   const openStateRef = useRef(isAnnouncementOpen);
   const [status, setStatus] = useState<LoadStatus>('idle');
@@ -156,21 +155,11 @@ export function FeishuDocModal() {
 
   /* 组件挂载时并行预载 SDK、配置、签名，降低弹窗首次打开延迟 */
   useEffect(() => {
-    const pageUrl = window.location.origin + window.location.pathname;
     void Promise.all([
       loadSdk().catch(() => {}),
       fetch('/api/announcement-config', { cache: 'no-store' })
         .then((r) => (r.ok ? (r.json() as Promise<AnnouncementConfigResponse>) : null))
         .then((d) => { if (d && !d.error) preloadRef.current.config = d; })
-        .catch(() => {}),
-      fetch(`/api/feishu-jsapi-signature?url=${encodeURIComponent(pageUrl)}`)
-        .then((r) => (r.ok ? (r.json() as Promise<JsapiSignatureResponse>) : null))
-        .then((d) => {
-          if (d?.signature) {
-            preloadRef.current.auth = d;
-            preloadRef.current.authFetchedAt = Date.now();
-          }
-        })
         .catch(() => {}),
     ]);
   }, []);
@@ -217,22 +206,16 @@ export function FeishuDocModal() {
     setStatus('loading');
     try {
       const pageUrl = window.location.origin + window.location.pathname;
-      const SIG_MAX_AGE_MS = 4 * 60 * 1000;
-      const now = Date.now();
 
-      /* 1. 并行：SDK（已预载则即返回）+ 配置 + 签名（优先复用预载缓存） */
+      /* 1. 并行：SDK（已预载则即返回）+ 配置 + 每次打开时重新获取签名 */
       const [, announcementCfg, auth] = await Promise.all([
         loadSdk(),
         fetch('/api/announcement-config', { cache: 'no-store' }).then(
           (r) => r.json() as Promise<AnnouncementConfigResponse>,
         ),
-        preloadRef.current.auth &&
-        preloadRef.current.auth.url === pageUrl &&
-        now - preloadRef.current.authFetchedAt < SIG_MAX_AGE_MS
-          ? Promise.resolve(preloadRef.current.auth)
-          : fetch(`/api/feishu-jsapi-signature?url=${encodeURIComponent(pageUrl)}`).then(
-              (r) => r.json() as Promise<JsapiSignatureResponse>,
-            ),
+        fetch(`/api/feishu-jsapi-signature?url=${encodeURIComponent(pageUrl)}`).then(
+          (r) => r.json() as Promise<JsapiSignatureResponse>,
+        ),
       ]);
 
       if (initVersion !== initVersionRef.current || !openStateRef.current) {
@@ -242,8 +225,6 @@ export function FeishuDocModal() {
       if (announcementCfg.error) throw new Error(announcementCfg.error ?? '公告配置接口异常');
       if (auth.error) throw new Error(auth.error ?? '鉴权接口异常');
       preloadRef.current.config = announcementCfg;
-      preloadRef.current.auth = auth;
-      preloadRef.current.authFetchedAt = now;
       setDocUrl(announcementCfg.docUrl);
 
       /* 3. 让出主线程一个宏任务，确保 React 当前 commit/work 周期结束后
@@ -266,6 +247,12 @@ export function FeishuDocModal() {
         config: announcementCfg.featureConfig,
         size: { width: '100%', height: '100%', minHeight: 400 },
         theme: 'light',
+        onAuthError: (err: unknown) => {
+          const message = err instanceof Error ? err.message : '飞书鉴权失败';
+          console.error('[FeishuDocModal] SDK auth error:', err);
+          setErrorMsg(message);
+          setStatus('error');
+        },
         onError: (err) => console.error('[FeishuDocModal] SDK error:', err),
       });
 

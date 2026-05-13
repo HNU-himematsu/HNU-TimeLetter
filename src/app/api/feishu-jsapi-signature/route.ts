@@ -104,7 +104,7 @@ export async function GET(request: NextRequest) {
     const ticket = await getJsapiTicket(appAccessToken);
 
     const nonceStr = crypto.randomBytes(8).toString('hex');
-    const timestamp = Math.floor(Date.now() / 1000);
+    const timestamp = Date.now();
 
     const str = `jsapi_ticket=${ticket}&noncestr=${nonceStr}&timestamp=${timestamp}&url=${url}`;
     const signature = crypto.createHash('sha1').update(str).digest('hex');
