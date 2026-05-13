@@ -58,9 +58,14 @@ export function AboutUs() {
   const [isHovered, setIsHovered] = useState(false);
   const [timerKey, setTimerKey] = useState(0);
   const [itemH, setItemH] = useState(160);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const update = () => setItemH(window.innerWidth < 768 ? 100 : 160);
+    const update = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      setItemH(mobile ? 100 : 160);
+    };
     update();
     window.addEventListener('resize', update);
     return () => window.removeEventListener('resize', update);
@@ -109,7 +114,7 @@ export function AboutUs() {
         transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
       >
         {/* 左：固定简介 */}
-        <div className="absolute left-[5%] top-[14%] max-w-[30%] text-left">
+        <div className="absolute left-[5%] top-[5%] md:top-[14%] max-w-[44%] md:max-w-[30%] text-left">
           <h2 className="font-serif text-ink-strong tracking-[0.02em] mb-8">
             关于我们
           </h2>
@@ -124,7 +129,7 @@ export function AboutUs() {
           style={{
             position: 'absolute',
             right: '6%',
-            top: '50%',
+            top: isMobile ? '64%' : '50%',
             transform: 'translateY(-50%)',
             display: 'flex',
             alignItems: 'flex-start',

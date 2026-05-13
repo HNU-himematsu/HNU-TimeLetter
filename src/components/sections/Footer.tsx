@@ -61,14 +61,14 @@ export function Footer() {
     >
       {/* ─── 大页脚导航 ─── */}
       <nav className="w-full max-w-7xl mx-auto px-6 md:px-24 py-5">
-        <div className="flex flex-wrap gap-14 justify-center md:justify-start">
+        <div className="grid grid-cols-2 gap-x-2 gap-y-1 md:flex md:flex-wrap md:gap-14 md:justify-start">
           {FOOTER_LINKS.map((link) =>
             link.onModal === 'announcement' ? (
               <button
                 key={link.title}
                 type="button"
                 onClick={openAnnouncement}
-                className="group flex flex-col gap-2.5 py-3.5 px-8 rounded-lg hover:bg-white/10 transition-colors text-left"
+                className="group flex flex-col gap-2.5 py-3.5 px-3 md:px-8 rounded-lg hover:bg-white/10 transition-colors text-left"
               >
                 <span
                   className="text-xl font-sans tracking-wide"
@@ -89,7 +89,7 @@ export function Footer() {
                 href={link.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex flex-col gap-2.5 py-3.5 px-8 rounded-lg hover:bg-white/10 transition-colors"
+                className="group flex flex-col gap-2.5 py-3.5 px-3 md:px-8 rounded-lg hover:bg-white/10 transition-colors"
               >
                 <span
                   className="text-xl font-sans tracking-wide"

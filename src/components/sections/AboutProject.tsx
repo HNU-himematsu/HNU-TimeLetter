@@ -36,7 +36,7 @@ export function AboutProject() {
         animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 60 }}
         transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
       >
-        <div className="w-[60%] px-[5%] text-left">
+        <div className="w-full md:w-[60%] px-[5%] text-left">
           {/* 标题 —— 使用全局 h2 基准字号（视觉规范 §2.2.1） */}
           <h2 className="mb-10 font-serif text-ink-strong tracking-[0.02em]">
             关于企划
