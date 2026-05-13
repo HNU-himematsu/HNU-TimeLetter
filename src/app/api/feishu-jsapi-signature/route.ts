@@ -12,6 +12,13 @@ let tokenCache: TokenCache | null = null;
 let ticketCache: TokenCache | null = null;
 
 async function getAppAccessToken(): Promise<string> {
+  const appId = process.env.FEISHU_APP_ID;
+  const appSecret = process.env.FEISHU_APP_SECRET;
+
+  if (!appId || !appSecret) {
+    throw new Error('缺少 FEISHU_APP_ID 或 FEISHU_APP_SECRET');
+  }
+
   const now = Date.now();
   if (tokenCache && tokenCache.expiresAt > now) {
     return tokenCache.value;
@@ -23,8 +30,8 @@ async function getAppAccessToken(): Promise<string> {
       method: 'POST',
       headers: { 'Content-Type': 'application/json; charset=utf-8' },
       body: JSON.stringify({
-        app_id: process.env.FEISHU_APP_ID,
-        app_secret: process.env.FEISHU_APP_SECRET,
+        app_id: appId,
+        app_secret: appSecret,
       }),
       cache: 'no-store',
     },
