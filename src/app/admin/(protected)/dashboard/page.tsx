@@ -26,6 +26,7 @@ type ConfigFormState = {
   enabled: boolean;
   cron: string;
   defaultTables: SyncTableKey[];
+  dependencyMode: DependencyMode;
 };
 
 type RunFormState = {
@@ -134,6 +135,30 @@ function dedupeTables(tables: SyncTableKey[]) {
   return Array.from(new Set(tables));
 }
 
+function getDependencyClosure(
+  tables: SyncTableKey[],
+  tableDefinitions: TableDefinition[],
+): SyncTableKey[] {
+  const dependenciesByTable = new Map(
+    tableDefinitions.map((table) => [table.key, table.dependsOn]),
+  );
+  const selected = new Set<SyncTableKey>();
+
+  const visit = (table: SyncTableKey) => {
+    if (selected.has(table)) {
+      return;
+    }
+
+    dependenciesByTable.get(table)?.forEach(visit);
+    selected.add(table);
+  };
+
+  tables.forEach(visit);
+  return tableDefinitions
+    .map((table) => table.key)
+    .filter((table) => selected.has(table));
+}
+
 export default function DashboardPage() {
   const [payload, setPayload] = useState<ConfigResponse | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -166,6 +191,7 @@ export default function DashboardPage() {
             enabled: configData.config.enabled,
             cron: configData.config.cron,
             defaultTables: [...configData.config.defaultTables],
+            dependencyMode: 'run_dependencies',
           },
         );
         setRunForm((current) =>
@@ -259,6 +285,7 @@ export default function DashboardPage() {
       enabled: payload.config.enabled,
       cron: payload.config.cron,
       defaultTables: [...payload.config.defaultTables],
+      dependencyMode: configForm?.dependencyMode ?? 'run_dependencies',
     });
     setRunForm((current) => ({
       dependencyMode: current?.dependencyMode ?? 'read_local',
@@ -339,7 +366,13 @@ export default function DashboardPage() {
       const response = await fetch('/api/admin/sync/config', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(configForm),
+        body: JSON.stringify({
+          enabled: configForm.enabled,
+          cron: configForm.cron,
+          defaultTables: configForm.dependencyMode === 'run_dependencies'
+            ? getDependencyClosure(configForm.defaultTables, availableTables)
+            : configForm.defaultTables,
+        }),
       });
 
       const data = (await response.json()) as ConfigResponse & { message?: string };
@@ -352,6 +385,7 @@ export default function DashboardPage() {
         enabled: data.config.enabled,
         cron: data.config.cron,
         defaultTables: [...data.config.defaultTables],
+        dependencyMode: configForm.dependencyMode,
       });
       setNotice({
         type: 'success',
@@ -679,6 +713,28 @@ export default function DashboardPage() {
 
           <div>
             <div className="mb-2 text-sm font-medium text-gray-800">默认同步表</div>
+            <label className="mb-3 block text-sm">
+              <span className="mb-1 block font-medium text-gray-800">保存依赖策略</span>
+              <select
+                value={configForm.dependencyMode}
+                onChange={(event) =>
+                  setConfigForm({
+                    ...configForm,
+                    dependencyMode: event.target.value as DependencyMode,
+                  })
+                }
+                className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+              >
+                {dependencyModeOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <span className="mt-1 block text-xs text-gray-500">
+                保存时按所选策略自动补齐默认同步表依赖。
+              </span>
+            </label>
             <div className="space-y-2">
               {availableTables.map((table) => (
                 <label

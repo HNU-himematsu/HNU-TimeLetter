@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
       {
         tables: ['creation_board'],
         kind: 'sync-data',
-        dependencyMode: 'read_local',
+        dependencyMode: 'run_dependencies',
         includeAssets: true,
         continueOnTableError: false,
         triggeredBy: 'webhook',

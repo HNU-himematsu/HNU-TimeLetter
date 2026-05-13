@@ -12,24 +12,25 @@
 - [登录接口](#2-登录接口)
 - [同步配置接口](#3-同步配置接口)
 - [同步任务接口](#4-同步任务接口)
-- [Webhook 接口](#5-webhook-接口飞书自动化)
-- [错误码一览](#6-错误码一览)
-- [数据类型定义](#7-数据类型定义)
+- [前台公告接口](#5-前台公告接口)
+- [Webhook 接口](#6-webhook-接口飞书自动化)
+- [错误码一览](#7-错误码一览)
+- [数据类型定义](#8-数据类型定义)
 
 ---
 
 ## 1. 鉴权说明
 
-后台所有接口（`POST /api/admin/login` 除外）均要求携带有效的 `admin_session` Cookie。
+后台所有接口（`POST /api/admin/login` 除外）均要求携带有效的 `admin_auth` Cookie。
 
 **Cookie 属性**
 
 | 属性 | 值 |
 |---|---|
-| 名称 | `admin_session` |
+| 名称 | `admin_auth` |
 | HttpOnly | 是 |
 | Secure | 是（生产环境） |
-| SameSite | Strict |
+| SameSite | Lax |
 | 有效期 | 7 天 |
 
 **未鉴权响应**
@@ -83,7 +84,7 @@ Content-Type: application/json
 { "success": true }
 ```
 
-同时在响应头中设置 `Set-Cookie: admin_session=...`。
+同时在响应头中设置 `Set-Cookie: admin_auth=...`。
 
 **密码错误** `401 Unauthorized`
 
@@ -115,7 +116,7 @@ Content-Type: application/json
 { "success": true }
 ```
 
-响应头清除 `admin_session` Cookie（Max-Age=0）。
+响应头清除 `admin_auth` Cookie（Max-Age=0）。
 
 ---
 
@@ -134,7 +135,7 @@ Content-Type: application/json
   "config": {
     "enabled": true,
     "cron": "0 2 * * *",
-    "defaultTables": ["locations", "stories", "creation_board", "contributors"],
+    "defaultTables": ["locations", "stories", "creation_headers", "creation_board", "contributors"],
     "defaultJobKind": "sync-data",
     "dataPublishMode": "build_time"
   },
@@ -506,9 +507,96 @@ GET /api/admin/sync/jobs?limit=10
 
 ---
 
-## 5. Webhook 接口（飞书自动化）
+### 4.5 GET /api/admin/announcement — 读取公告配置
 
-### 5.1 POST /api/admin/sync/webhook — 飞书自动化触发同步
+**需要鉴权 Cookie**
+
+**成功响应** `200 OK`
+
+```json
+{
+  "docUrl": "https://himematsu.feishu.cn/docx/EbsDdehuLo1801xBzb1cxzJLnHb",
+  "featureConfig": {
+    "extensions": {}
+  }
+}
+```
+
+### 4.6 PATCH /api/admin/announcement — 更新公告配置
+
+**需要鉴权 Cookie**
+
+**请求体**
+
+```json
+{
+  "docUrl": "https://himematsu.feishu.cn/docx/EbsDdehuLo1801xBzb1cxzJLnHb",
+  "featureConfig": {
+    "extensions": {}
+  }
+}
+```
+
+**成功响应** `200 OK`：返回更新后的公告配置。
+
+**参数错误** `400 Bad Request`
+
+```json
+{ "message": "文档链接不能为空" }
+```
+
+---
+
+## 5. 前台公告接口
+
+### 5.1 GET /api/announcement-config — 读取前台公告配置
+
+**无需鉴权**，前台弹窗打开时读取。
+
+**成功响应** `200 OK`
+
+```json
+{
+  "docUrl": "https://himematsu.feishu.cn/docx/EbsDdehuLo1801xBzb1cxzJLnHb",
+  "featureConfig": {
+    "extensions": {}
+  }
+}
+```
+
+### 5.2 GET /api/feishu-jsapi-signature — 生成飞书 JSAPI 签名
+
+**无需 Cookie。** 查询参数：`url` 为当前页面完整 URL。
+
+**成功响应** `200 OK`
+
+```json
+{
+  "signature": "sha1-signature",
+  "appId": "cli_xxx",
+  "timestamp": 1778670000000,
+  "nonceStr": "random",
+  "url": "https://himematsu.cn/"
+}
+```
+
+**参数错误** `400 Bad Request`
+
+```json
+{ "error": "Missing url parameter" }
+```
+
+**服务端错误** `500 Internal Server Error`
+
+```json
+{ "error": "缺少 FEISHU_APP_ID 或 FEISHU_APP_SECRET" }
+```
+
+---
+
+## 6. Webhook 接口（飞书自动化）
+
+### 6.1 POST /api/admin/sync/webhook — 飞书自动化触发同步
 
 **不需要 Cookie，使用 Bearer Token 鉴权。**
 
@@ -577,7 +665,7 @@ https://himematsu.cn/api/admin/sync/webhook?secret=<SYNC_WEBHOOK_SECRET>
 
 ---
 
-## 6. 错误码一览
+## 7. 错误码一览
 
 | 状态码 | 含义 | 场景 |
 |---|---|---|
@@ -592,7 +680,7 @@ https://himematsu.cn/api/admin/sync/webhook?secret=<SYNC_WEBHOOK_SECRET>
 
 ---
 
-## 6. 数据类型定义
+## 8. 数据类型定义
 
 ### SyncJobKind
 
@@ -608,13 +696,14 @@ type SyncJobKind = 'sync-data' | 'sync-data-and-publish';
 ### SyncTableKey
 
 ```ts
-type SyncTableKey = 'locations' | 'stories' | 'creation_board' | 'contributors';
+type SyncTableKey = keyof SyncTableOutputMap;
 ```
 
 | 值 | 飞书表 | 输出文件 |
 |---|---|---|
 | `locations` | 地点表 | `src/config/locations.json` |
 | `stories` | 故事表 | `src/data/content.json` |
+| `creation_headers` | 创作公示板头表 | `src/data/creation-board-headers.json` |
 | `creation_board` | 创作公示板 | `src/data/creation-board.json` |
 | `contributors` | 鸣谢名单 | `src/data/contributors.json` |
 
@@ -648,7 +737,7 @@ type SyncJobStatus = 'queued' | 'running' | 'success' | 'partial_success' | 'fai
 ### SyncPublishStatus
 
 ```ts
-type SyncPublishStatus = 'not_required' | 'building' | 'published' | 'publish_failed';
+type SyncPublishStatus = 'not_required' | 'pending' | 'building' | 'published' | 'publish_failed';
 ```
 
 | 值 | 说明 |
