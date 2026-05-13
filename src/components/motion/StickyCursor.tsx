@@ -52,6 +52,12 @@ const INNER_DIVISOR = 6
  * 而非定格在 iframe 边界。弹窗关闭后光标恢复渲染，RAF 插值
  * 循环始终运行，恢复时光标位置无跳变。
  *
+ * 光标初始化策略：组件挂载时无法获知鼠标位置（浏览器不提供
+ * 同步读取 API），因此光标在首次 mousemove 之前不可见。首次
+ * mousemove 触发时，所有位置值（mouseX/Y、LERP 累加器、
+ * outerX/Y、innerX/Y）瞬时对齐到当前鼠标坐标，光标立即在
+ * 正确位置出现，之后启动正常的 LERP 延迟追踪循环。
+ *
  * 触摸设备上自动隐藏（无物理光标可追踪）。
  * 视口宽度低于 1024px 时同样隐藏，防止平板与大屏手机误显示。
  * 尊重 prefers-reduced-motion 用户偏好。
@@ -138,8 +144,42 @@ export function StickyCursor() {
     return () => cancelAnimationFrame(rafId)
   }, [prefersReducedMotion, isTouchDevice, mouseX, mouseY, outerX, outerY, innerX, innerY])
 
+  // ---- 光标初始化守卫（首次 mousemove 之前不可见） ----
+  const [initialized, setInitialized] = useState(false)
+
+  // ---- 首次 mousemove：瞬时对齐所有位置值，绕过 LERP ----
+  useEffect(() => {
+    if (prefersReducedMotion || isTouchDevice) return
+
+    function handleFirstMove(e: MouseEvent) {
+      const cx = e.clientX
+      const cy = e.clientY
+
+      // 真实坐标
+      mouseX.set(cx)
+      mouseY.set(cy)
+
+      // LERP 累加器
+      lerpRef.current.outerX = cx
+      lerpRef.current.outerY = cy
+      lerpRef.current.innerX = cx
+      lerpRef.current.innerY = cy
+
+      // 展示坐标
+      outerX.set(cx)
+      outerY.set(cy)
+      innerX.set(cx)
+      innerY.set(cy)
+
+      setInitialized(true)
+    }
+
+    window.addEventListener('mousemove', handleFirstMove, { once: true, passive: true })
+    return () => window.removeEventListener('mousemove', handleFirstMove)
+  }, [prefersReducedMotion, isTouchDevice, mouseX, mouseY, outerX, outerY, innerX, innerY])
+
   // ---- 不渲染光标的条件 ----
-  if (prefersReducedMotion || isTouchDevice || isAnnouncementOpen) {
+  if (prefersReducedMotion || isTouchDevice || isAnnouncementOpen || !initialized) {
     return null
   }
 
