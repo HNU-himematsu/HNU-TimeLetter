@@ -21,7 +21,7 @@ export default function Home() {
   const scrollbarEnabled =
     mounted && !isMobile && isIntroReady && !isTransitioning && !isAnnouncementOpen;
 
-  // 避免 SSR Hydration 问题
+  // mounted 标志确保客户端渲染完成后才启用 Lenis 与自定义滚动条
   useEffect(() => {
     setMounted(true);
   }, []);

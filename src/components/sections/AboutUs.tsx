@@ -53,7 +53,7 @@ export function AboutUs() {
 
   // rawOffset：INFINITE_ITEMS 中当前激活的索引，初始指向中间副本首项
   const [rawOffset, setRawOffset] = useState(TEAM_MEMBERS.length);
-  // 越界瞬移时暂时禁用弹性动画
+  // 越界瞬移时禁用弹性动画
   const [skipTransition, setSkipTransition] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [timerKey, setTimerKey] = useState(0);

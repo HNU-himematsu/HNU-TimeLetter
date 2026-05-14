@@ -5,7 +5,7 @@ export type DataPublishMode = 'build_time' | 'runtime_api';
 
 export type SyncJobKind = 'sync-data' | 'sync-data-and-publish';
 
-/** 从 SyncTableOutputMap 派生，确保二者永远一致，新增同步表只需扩展 SyncTableOutputMap。 */
+/** 从 SyncTableOutputMap 派生，确保类型定义与输出映射始终一致。扩展同步表时在 SyncTableOutputMap 中添加条目，SyncTableKey 自动跟随更新。 */
 export type SyncTableKey = keyof SyncTableOutputMap;
 
 export type DependencyMode = 'read_local' | 'run_dependencies' | 'strict';

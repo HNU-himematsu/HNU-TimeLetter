@@ -13,8 +13,8 @@ import { useAppStore } from '@/lib/store';
  * 自动消退：挂起后 2500ms（对齐「信纸放大 0.9s + 目标页入场 ~1.5s」）清除 `isTransitioning`，
  * `AnimatePresence` 的 exit 再叠加 1s 淡出，总计约 3.5s。
  *
- * prefers-reduced-motion：遮罩保留（仍需遮挡视觉空窗），但移除三点脉冲/文字呼吸/淡出动效，
- * 退化为瞬态显示与瞬态消失。
+ * prefers-reduced-motion：遮罩保留（遮挡视觉空窗），三点脉冲/文字呼吸/淡出动效退化为
+ * 瞬态显示与瞬态消失。
  */
 export function TransitionOverlay() {
   const { isTransitioning, setTransitioning } = useAppStore();

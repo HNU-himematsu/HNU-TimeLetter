@@ -95,7 +95,7 @@ type Phase = 'loading' | 'sweeping' | 'entering' | 'idle' | 'opening';
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 /* ────────────────────────────────────────────
- * 几何常量 —— 规范见 docs/design/开屏页重构.md
+ * 几何常量 —— 设计规范见 docs/design/开屏页重构.md
  * ──────────────────────────────────────────── */
 const FIELD_BASE = '#ece9e4';     // Base Layer 全局底色
 const BLOCK_BASE = '#c23643';     // Base Layer 顶部斜底色块
@@ -423,8 +423,7 @@ export function EnvelopeIntro() {
 
     if (unmountedRef.current) return;
 
-    // 跳转到 `/map`：由全局导航栏的「地图」激活态驱动胶囊切换，
-    // 状态层不再承担「是否显示地图」的判定（交给路由）。
+    // 跳转到 `/map`：由路由控制地图显示，全局导航栏根据当前路由切换胶囊激活态。
     router.push('/map');
   }, [envelopeControls, openControls, shellDropControls, router, setTransitioning]);
 
@@ -480,8 +479,8 @@ export function EnvelopeIntro() {
             />
           </div>
 
-          {/* 红色 Logo：仅在「奶白底区」（斜底色块补集）可见。补足用户反馈中
-              「海字走到奶白区会消失」的问题——越界部分以红色呈现与奶白底形成对比。 */}
+          {/* 红色 Logo：仅在「奶白底区」（斜底色块补集）可见，以红色与奶白底形成对比，
+              确保 Logo 跨越色块分界线时始终可读。 */}
           <div
             className="absolute inset-0 pointer-events-none"
             aria-hidden

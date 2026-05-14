@@ -12,7 +12,7 @@ import { getPrimaryStory, getStoryAvatarUrl } from '@/lib/content';
 import { useContentData } from '@/lib/content-store';
 
 /**
- * InteractiveMap (交互式地图组件) — 重构版
+ * InteractiveMap (交互式地图组件)
  *
  * 交互流程:
  *  idle ──(点击 Pin)──► rolling ──(地图动画完成)──► rolled
@@ -37,7 +37,7 @@ type Phase = 'idle' | 'rolling' | 'rolled' | 'unrolling';
 /** 卷轴条宽度 (px) */
 const STRIP_WIDTH = 56;
 
-/** 地图卷起及展开交互的动画参数 (优化缓动曲线) */
+/** 地图卷起及展开交互的动画参数 */
 const MAP_ROLL_TRANSITION = {
   // 卷起 (即向右平移露出故事)，增加一点点弹性和更平滑的触底
   roll: { duration: 0.52, ease: [0.16, 1, 0.3, 1] as const },
