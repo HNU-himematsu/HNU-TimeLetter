@@ -21,6 +21,7 @@ export interface CardHeaderInfo {
   cardId: string;
   location: string;
   character: string;
+  sortOrder: number;
 }
 
 // 创作公示板实体 (对应揭示板表中的一行展示记录)
@@ -32,6 +33,7 @@ export interface CreationIdea {
   images: string[];
   createdAt: string;
   tags: string;
+  sortOrder: number;
 }
 
 // 创作公示板 — 卡片内部的一条原始记录展示项
@@ -43,6 +45,7 @@ export interface CreationEntry {
   content: string;
   images: string[];
   createdAt: string;
+  sortOrder: number;
 }
 
 // 创作公示板 — 按 CardID 聚合后的卡片级渲染单元

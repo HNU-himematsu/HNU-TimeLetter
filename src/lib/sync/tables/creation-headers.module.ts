@@ -1,6 +1,6 @@
 import type { CardHeaderInfo } from '../../types';
 import type { TableSyncModule } from '../types';
-import { getText } from '../shared/field-reader';
+import { getText, getNumber } from '../shared/field-reader';
 import { writeCreationBoardHeaders } from '../writers/creation-board-headers.writer';
 
 export const creationHeadersModule: TableSyncModule<'creation_headers'> = {
@@ -23,6 +23,7 @@ export const creationHeadersModule: TableSyncModule<'creation_headers'> = {
         cardId,
         location: getText(record.fields['地点']).trim(),
         character: getText(record.fields['角色']).trim(),
+        sortOrder: getNumber(record.fields['自动编号']),
       });
     }
 

@@ -26,6 +26,13 @@ function assertOptionalString(value: unknown, path: string): asserts value is st
   }
 }
 
+function ensureNumber(obj: Record<string, unknown>, key: string, fallback: number): void {
+  const val = obj[key];
+  if (typeof val !== 'number' || !Number.isFinite(val)) {
+    obj[key] = fallback;
+  }
+}
+
 function assertNumber(value: unknown, path: string): asserts value is number {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
     throw new ContentSchemaError(`${path} 必须是有效数字`);
@@ -75,6 +82,7 @@ function validateCreationIdea(value: unknown, path: string): CreationIdea {
   value.images.forEach((image, index) => assertString(image, `${path}.images[${index}]`));
   assertString(value.createdAt, `${path}.createdAt`);
   assertString(value.tags, `${path}.tags`);
+  ensureNumber(value, 'sortOrder', 0);
 
   return value as unknown as CreationIdea;
 }
@@ -84,6 +92,7 @@ function validateCardHeaderInfo(value: unknown, path: string): CardHeaderInfo {
   assertString(value.cardId, `${path}.cardId`);
   assertString(value.location, `${path}.location`);
   assertString(value.character, `${path}.character`);
+  ensureNumber(value, 'sortOrder', 0);
 
   return value as unknown as CardHeaderInfo;
 }

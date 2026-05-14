@@ -2,7 +2,7 @@ import type { CardHeaderInfo, CreationIdea } from '../../types';
 import type { TableSyncModule } from '../types';
 import { processAttachments } from '../shared/asset-processor';
 import { formatDateTime } from '../shared/dates';
-import { getAttachments, getText } from '../shared/field-reader';
+import { getAttachments, getText, getNumber } from '../shared/field-reader';
 import { extractUrlsFromText, mergeTextWithUrls } from '../shared/text';
 import { writeCreationBoard } from '../writers/creation-board.writer';
 import { readLocalCreationBoardHeaders } from '../writers/creation-board-headers.writer';
@@ -46,6 +46,7 @@ export const creationBoardModule: TableSyncModule<'creation_board'> = {
           const author = getText(fields['你的昵称']);
           const existingText = getText(fields['文本']).trim();
           const attachments = getAttachments(fields['请上传你的图片']);
+          const sortOrder = getNumber(fields['自动编号']);
 
           let imageUrls = extractUrlsFromText(existingText);
 
@@ -81,6 +82,7 @@ export const creationBoardModule: TableSyncModule<'creation_board'> = {
             images: imageUrls,
             createdAt: formatDateTime(fields['提交时间']),
             tags: contentType,
+            sortOrder,
           } satisfies CreationIdea;
         }),
       );
@@ -100,7 +102,7 @@ export const creationBoardModule: TableSyncModule<'creation_board'> = {
       });
     }
 
-    ideas.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    ideas.sort((a, b) => a.sortOrder - b.sortOrder);
 
     const filePath = writeCreationBoard(ideas);
 

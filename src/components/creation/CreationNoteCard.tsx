@@ -1,7 +1,7 @@
 'use client';
 
 import type { CreationCard } from '@/lib/types';
-import { getCardColor, getCardRotation } from './utils';
+import { getCardColor } from './utils';
 import CreationNoteEntry from './CreationNoteEntry';
 
 interface CreationNoteCardProps {
@@ -10,7 +10,6 @@ interface CreationNoteCardProps {
 
 export default function CreationNoteCard({ card }: CreationNoteCardProps) {
   const bgColor = getCardColor(card.cardId);
-  const rotation = getCardRotation(card.cardId);
 
   return (
     <div
@@ -18,19 +17,16 @@ export default function CreationNoteCard({ card }: CreationNoteCardProps) {
                  transition-all duration-200 ease-out"
       style={{
         backgroundColor: bgColor,
-        transform: `rotate(${rotation}deg) translateY(0px)`,
+        transform: 'translateY(0px)',
         boxShadow: '2px 3px 12px rgba(69,39,40,0.08)',
         borderRadius: 0,
-        // Hover 时角度归正、轻微抬升、阴影增强（通过 CSS 变量）
-        ['--hover-transform' as string]: 'rotate(0deg) translateY(-4px)',
-        ['--hover-shadow' as string]: '0 8px 24px rgba(69,39,40,0.14)',
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'rotate(0deg) translateY(-4px)';
+        e.currentTarget.style.transform = 'translateY(-4px)';
         e.currentTarget.style.boxShadow = '0 8px 24px rgba(69,39,40,0.14)';
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.transform = `rotate(${rotation}deg) translateY(0px)`;
+        e.currentTarget.style.transform = 'translateY(0px)';
         e.currentTarget.style.boxShadow = '2px 3px 12px rgba(69,39,40,0.08)';
       }}
     >

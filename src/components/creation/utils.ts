@@ -22,6 +22,7 @@ export function groupIdeasToCards(
       content: idea.content,
       images: idea.images,
       createdAt: idea.createdAt,
+      sortOrder: idea.sortOrder,
     };
 
     if (!cardMap.has(idea.cardId)) {
@@ -35,6 +36,7 @@ export function groupIdeasToCards(
   const cards: CreationCard[] = [];
   for (const [cardId, entries] of cardMap) {
     const hdr = headerMap.get(cardId);
+    entries.sort((a, b) => a.sortOrder - b.sortOrder);
     cards.push({
       id: cardId,
       cardId,
@@ -44,6 +46,12 @@ export function groupIdeasToCards(
       character: hdr?.character || undefined,
     });
   }
+
+  cards.sort((a, b) => {
+    const aOrder = headerMap.get(a.cardId)?.sortOrder ?? 0;
+    const bOrder = headerMap.get(b.cardId)?.sortOrder ?? 0;
+    return aOrder - bOrder;
+  });
 
   return cards;
 }

@@ -3,17 +3,26 @@
     {
       "cardId": "2J6Bt3",
       "location": "1",
-      "character": "4363635"
+      "character": "4363635",
+      "sortOrder": 19
     },
     {
       "cardId": "nJYIsh",
       "location": "3",
-      "character": "364534563"
+      "character": "364534563",
+      "sortOrder": 20
     },
     {
       "cardId": "PEbdEL",
       "location": "3",
-      "character": "345633"
+      "character": "345633",
+      "sortOrder": 21
+    },
+    {
+      "cardId": "wcyUab",
+      "location": "2",
+      "character": "erwtwert",
+      "sortOrder": 22
     }
   ]
 }
