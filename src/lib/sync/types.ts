@@ -28,7 +28,6 @@ export interface SyncConfigRecord {
   enabled: boolean;
   cron: string;
   defaultTables: SyncTableKey[];
-  defaultJobKind: SyncJobKind;
 }
 
 export interface SyncRunRequest {

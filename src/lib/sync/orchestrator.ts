@@ -88,7 +88,7 @@ function resolveRequestedTables(request: SyncRunRequest, fallback: SyncTableKey[
 function createInitialJob(request: SyncRunRequest): SyncJobRecord {
   const config = getSyncConfig();
   const tables = resolveRequestedTables(request, config.defaultTables);
-  const kind = normalizeKind(request.kind ?? config.defaultJobKind);
+  const kind = normalizeKind(request.kind ?? 'sync-data');
   const dependencyMode = normalizeDependencyMode(request.dependencyMode ?? 'read_local');
   const effectiveTables = resolveEffectiveTables(tables, dependencyMode);
 

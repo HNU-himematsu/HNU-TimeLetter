@@ -138,8 +138,7 @@ Content-Type: application/json
   "config": {
     "enabled": true,
     "cron": "0 2 * * *",
-    "defaultTables": ["locations", "stories", "creation_headers", "creation_board", "contributors"],
-    "defaultJobKind": "sync-data"
+    "defaultTables": ["locations", "stories", "creation_headers", "creation_board", "contributors"]
   },
   "runtime": {
     "currentJobId": null,
@@ -186,7 +185,6 @@ Content-Type: application/json
 | `enabled` | `boolean` | 定时任务是否启用 |
 | `cron` | `string` | Cron 表达式 |
 | `defaultTables` | `SyncTableKey[]` | 调度器默认同步的表 |
-| `defaultJobKind` | `SyncJobKind` | 调度器默认任务类型（固定为 `"sync-data"`） |
 
 `runtime` 对象：
 
@@ -217,8 +215,7 @@ Content-Type: application/json
 {
   "enabled": true,
   "cron": "0 */6 * * *",
-  "defaultTables": ["locations", "stories"],
-  "defaultJobKind": "sync-data"
+  "defaultTables": ["locations", "stories"]
 }
 ```
 
@@ -227,7 +224,6 @@ Content-Type: application/json
 | `enabled` | `boolean` | 是否启用定时任务 |
 | `cron` | `string` | Cron 表达式，至少 5 段 |
 | `defaultTables` | `SyncTableKey[]` | 默认同步表，不可为空数组 |
-| `defaultJobKind` | `SyncJobKind` | 默认任务类型 |
 
 **成功响应** `200 OK`
 

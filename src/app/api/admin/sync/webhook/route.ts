@@ -29,7 +29,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   createSyncJob,
   normalizeSyncTables,
-  SYNC_TABLE_KEYS,
   SyncValidationError,
 } from '@/lib/sync';
 import { SyncConflictError } from '@/lib/sync/lock';

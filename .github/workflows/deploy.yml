@@ -169,9 +169,6 @@ jobs:
             printf 'ALIYUN_OSS_ACCESS_KEY_SECRET=%s\n'  "${ALIYUN_OSS_ACCESS_KEY_SECRET}"
             printf 'ADMIN_PASSWORD=%s\n'                "${ADMIN_PASSWORD}"
             printf 'ADMIN_SESSION_SECRET=%s\n'          "${ADMIN_SESSION_SECRET}"
-            printf 'DATA_PUBLISH_MODE=runtime_api\n'
-            printf 'SYNC_RESTART_COMMAND=pm2 reload %s --update-env\n' "${PM2_APP_NAME}"
-            printf 'SYNC_HEALTHCHECK_URL=http://localhost:3000\n'
           } | ssh -p "$SERVER_PORT" \
             "${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }}" \
             "cat > '$DEPLOY_PATH/.env.production'"

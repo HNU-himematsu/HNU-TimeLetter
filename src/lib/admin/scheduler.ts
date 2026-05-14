@@ -24,7 +24,7 @@ export function startSyncJob(cron: string) {
 
     try {
       await runSyncJob({
-        kind: config.defaultJobKind,
+        kind: 'sync-data',
         tables: config.defaultTables,
         triggeredBy: 'scheduler',
       });
@@ -58,7 +58,7 @@ export function getNextRunAt(): string | null {
 export async function runSyncTask() {
   const config = getSyncConfig();
   return runSyncJob({
-    kind: config.defaultJobKind,
+    kind: 'sync-data',
     tables: config.defaultTables,
     triggeredBy: 'scheduler',
   });
