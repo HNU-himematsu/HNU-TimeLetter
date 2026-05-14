@@ -51,7 +51,7 @@ export default function RootLayout({
          */}
         <script
           dangerouslySetInnerHTML={{
-            __html: "document.documentElement.classList.add('intro-scroll-locked');",
+            __html: "if(window.location.pathname==='/')document.documentElement.classList.add('intro-scroll-locked');",
           }}
         />
       </head>
