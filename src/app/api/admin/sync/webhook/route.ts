@@ -7,12 +7,17 @@
  *   1. 请求头 Authorization: Bearer <SYNC_WEBHOOK_SECRET>
  *   2. 查询参数 ?secret=<SYNC_WEBHOOK_SECRET>（用于不支持自定义 Header 的情况）
  *
+ * 查询参数：
+ *   tables  — 逗号分隔的同步表 key，可选，默认为 creation_board
+ *             示例：?tables=creation_board,creation_headers
+ *
  * 环境变量：
  *   SYNC_WEBHOOK_SECRET — Webhook 专用密钥（推荐单独设置）
  *                         未设置时回退使用 ADMIN_PASSWORD
  *
  * 响应：
  *   202  同步任务已创建（后台异步执行）
+ *   400  表 key 无效
  *   401  密钥错误或未提供
  *   409  已有同步任务运行中
  *   429  请求过于频繁
@@ -21,8 +26,14 @@
 
 import { timingSafeEqual } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
-import { createSyncJob, SyncValidationError } from '@/lib/sync/orchestrator';
+import {
+  createSyncJob,
+  normalizeSyncTables,
+  SYNC_TABLE_KEYS,
+  SyncValidationError,
+} from '@/lib/sync';
 import { SyncConflictError } from '@/lib/sync/lock';
+import type { SyncTableKey } from '@/lib/sync/types';
 
 // ─── 鉴权 ────────────────────────────────────────────────────────────────────
 
@@ -96,16 +107,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
 
+  const tablesParam = request.nextUrl.searchParams.get('tables') ?? 'creation_board';
+  const tables = tablesParam
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean) as SyncTableKey[];
+
   try {
     const job = await createSyncJob(
       {
-        tables: ['creation_board'],
+        tables: normalizeSyncTables(tables, ['creation_board'] as SyncTableKey[]),
         kind: 'sync-data',
         dependencyMode: 'run_dependencies',
         includeAssets: true,
         continueOnTableError: false,
         triggeredBy: 'webhook',
-        note: '飞书自动化 Webhook 触发',
+        note: `飞书自动化 Webhook 触发（${tables.join(', ')}）`,
       },
       { executeInBackground: true },
     );

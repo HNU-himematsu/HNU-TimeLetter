@@ -12,7 +12,6 @@ export function getDefaultSyncConfig(): SyncConfigRecord {
     cron: '0 0 * * *',
     defaultTables: [...SYNC_TABLE_KEYS],
     defaultJobKind: 'sync-data',
-    dataPublishMode: 'build_time',
   };
 }
 
@@ -63,9 +62,6 @@ export function updateSyncConfig(
     ...(patch.cron !== undefined ? { cron: patch.cron } : {}),
     ...(patch.defaultJobKind !== undefined
       ? { defaultJobKind: patch.defaultJobKind }
-      : {}),
-    ...(patch.dataPublishMode !== undefined
-      ? { dataPublishMode: patch.dataPublishMode }
       : {}),
     defaultTables:
       patch.defaultTables === undefined

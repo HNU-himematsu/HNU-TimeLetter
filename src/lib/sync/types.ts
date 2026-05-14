@@ -1,9 +1,7 @@
 import type { CardHeaderInfo, Contributor, CreationIdea, LocationPoint } from '../types';
 import type { SyncLogger } from './logger';
 
-export type DataPublishMode = 'build_time' | 'runtime_api';
-
-export type SyncJobKind = 'sync-data' | 'sync-data-and-publish';
+export type SyncJobKind = 'sync-data';
 
 /** 从 SyncTableOutputMap 派生，确保类型定义与输出映射始终一致。扩展同步表时在 SyncTableOutputMap 中添加条目，SyncTableKey 自动跟随更新。 */
 export type SyncTableKey = keyof SyncTableOutputMap;
@@ -18,13 +16,6 @@ export type SyncJobStatus =
   | 'failed'
   | 'canceled';
 
-export type SyncPublishStatus =
-  | 'not_required'
-  | 'pending'
-  | 'building'
-  | 'published'
-  | 'publish_failed';
-
 export type SyncStepStatus =
   | 'pending'
   | 'running'
@@ -38,7 +29,6 @@ export interface SyncConfigRecord {
   cron: string;
   defaultTables: SyncTableKey[];
   defaultJobKind: SyncJobKind;
-  dataPublishMode: DataPublishMode;
 }
 
 export interface SyncRunRequest {
@@ -74,7 +64,6 @@ export interface SyncJobRecord {
   jobId: string;
   kind: SyncJobKind;
   status: SyncJobStatus;
-  publishStatus?: SyncPublishStatus;
   tables: SyncTableKey[];
   effectiveTables: SyncTableKey[];
   dependencyMode: DependencyMode;
@@ -85,7 +74,6 @@ export interface SyncJobRecord {
   createdAt: string;
   startedAt?: string;
   syncedAt?: string;
-  publishedAt?: string;
   finishedAt?: string;
   durationMs?: number;
   steps: SyncJobStep[];
@@ -98,8 +86,6 @@ export interface SyncRuntimeSummary {
   currentJobId: string | null;
   lastJobId: string | null;
   lastRunAt?: string;
-  lastPublishAt?: string;
-  hasPendingPublish: boolean;
 }
 
 export interface SyncConfigResponse {
