@@ -32,10 +32,7 @@ export function getAdminConfig(): AdminConfig {
       lastMessage:
         currentJob
           ? '同步任务正在执行中'
-          : lastJob?.errors[0] ??
-            (lastJob?.publishStatus === 'pending'
-              ? '数据已同步，尚未发布'
-              : undefined),
+          : lastJob?.errors[0] ?? undefined,
     },
   };
 }

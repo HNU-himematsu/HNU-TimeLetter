@@ -3,8 +3,8 @@
 import { useState, useEffect, useLayoutEffect, type RefObject } from 'react';
 
 /**
- * 响应式媒体查询 Hook
- * 用于检测屏幕宽度，避免 SSR Hydration 问题
+ * 响应式媒体查询 Hook。
+ * 基于浏览器 window.matchMedia API 检测屏幕宽度，仅在客户端渲染阶段生效。
  */
 export function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState(false);

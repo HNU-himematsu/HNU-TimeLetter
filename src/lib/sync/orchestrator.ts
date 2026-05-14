@@ -2,7 +2,6 @@ import { getSyncConfig } from './config';
 import { getJob, getRuntimeSummary, listJobs, updateJob, writeJob } from './job-store';
 import { acquireSyncLock, releaseSyncLock, SyncConflictError } from './lock';
 import { createSyncLogger } from './logger';
-import { publishBuildTimeData } from './publish/publisher';
 import {
   resolveEffectiveTables,
   normalizeSyncTables,
@@ -63,7 +62,7 @@ function pushUnique(list: string[], values: string[]) {
 }
 
 function normalizeKind(kind: string): SyncJobKind {
-  if (kind === 'sync-data' || kind === 'sync-data-and-publish') {
+  if (kind === 'sync-data') {
     return kind;
   }
 
@@ -89,27 +88,17 @@ function resolveRequestedTables(request: SyncRunRequest, fallback: SyncTableKey[
 function createInitialJob(request: SyncRunRequest): SyncJobRecord {
   const config = getSyncConfig();
   const tables = resolveRequestedTables(request, config.defaultTables);
-  const kind = normalizeKind(request.kind ?? config.defaultJobKind);
+  const kind = normalizeKind(request.kind ?? 'sync-data');
   const dependencyMode = normalizeDependencyMode(request.dependencyMode ?? 'read_local');
   const effectiveTables = resolveEffectiveTables(tables, dependencyMode);
 
-  const steps: SyncJobStep[] = [
-    ...effectiveTables.map(
-      (table) =>
-        ({
-          step: table,
-          status: 'pending',
-        }) satisfies SyncJobStep,
-    ),
-    ...(kind === 'sync-data-and-publish'
-      ? [
-          {
-            step: 'publish',
-            status: 'pending',
-          } satisfies SyncJobStep,
-        ]
-      : []),
-  ];
+  const steps: SyncJobStep[] = effectiveTables.map(
+    (table) =>
+      ({
+        step: table,
+        status: 'pending',
+      }) satisfies SyncJobStep,
+  );
 
   return {
     jobId: createJobId(),
@@ -314,7 +303,6 @@ export async function executeSyncJob(jobId: string) {
           ? Date.now() - Date.parse(job.startedAt)
           : undefined,
         errors: [...job.errors, error.message],
-        publishStatus: 'not_required',
       }));
     }
     throw error;
@@ -418,7 +406,6 @@ export async function executeSyncJob(jobId: string) {
         ? markPendingStepsSkipped(
             job,
             '前序同步步骤失败，未继续执行剩余步骤',
-            (step) => step.step !== 'publish',
           )
         : job;
 
@@ -426,94 +413,17 @@ export async function executeSyncJob(jobId: string) {
         ...nextJob,
         status: syncStatus,
         syncedAt: anySuccessfulTables ? syncFinishedAt : job.syncedAt,
+        finishedAt: new Date().toISOString(),
+        durationMs: job.startedAt
+          ? Date.now() - Date.parse(job.startedAt)
+          : undefined,
         warnings: [...executionState.warnings],
         errors: [...executionState.errors],
         summary: buildJobSummary(executionState),
       };
     });
 
-    const afterSync = getJob(jobId);
-    if (!afterSync) {
-      throw new Error(`Sync job disappeared after sync phase: ${jobId}`);
-    }
-
-    if (afterSync.kind === 'sync-data') {
-      updateJob(jobId, (job) => ({
-        ...job,
-        publishStatus: anySuccessfulTables ? 'pending' : 'not_required',
-        finishedAt: new Date().toISOString(),
-        durationMs: job.startedAt
-          ? Date.now() - Date.parse(job.startedAt)
-          : undefined,
-      }));
-
-      logger.info('Sync job completed without publish step', {
-        status: syncStatus,
-      });
-      return getJob(jobId);
-    }
-
-    if (syncStatus !== 'success') {
-      const publishWarning = anySuccessfulTables
-        ? '同步阶段存在失败步骤，已跳过发布'
-        : '同步阶段未生成可发布产物，已跳过发布';
-
-      updateJob(jobId, (job) => ({
-        ...markPendingStepsSkipped(job, publishWarning, (step) => step.step === 'publish'),
-        publishStatus: anySuccessfulTables ? 'pending' : 'not_required',
-        finishedAt: new Date().toISOString(),
-        durationMs: job.startedAt
-          ? Date.now() - Date.parse(job.startedAt)
-          : undefined,
-        warnings: job.warnings.includes(publishWarning)
-          ? job.warnings
-          : [...job.warnings, publishWarning],
-      }));
-
-      logger.warn(publishWarning);
-      return getJob(jobId);
-    }
-
-    updateJob(jobId, (job) =>
-      updateStep(
-        {
-          ...job,
-          publishStatus: 'building',
-        },
-        'publish',
-        {
-          status: 'running',
-          startedAt: new Date().toISOString(),
-        },
-      ),
-    );
-
-    logger.info('Publish step started');
-    await publishBuildTimeData(logger);
-
-    updateJob(jobId, (job) => {
-      const publishedSummary = {
-        ...(job.summary ?? {}),
-        published: true,
-      };
-
-      return {
-        ...updateStep(job, 'publish', {
-          status: 'success',
-          finishedAt: new Date().toISOString(),
-        }),
-        status: syncStatus,
-        publishStatus: 'published',
-        publishedAt: new Date().toISOString(),
-        finishedAt: new Date().toISOString(),
-        durationMs: job.startedAt
-          ? Date.now() - Date.parse(job.startedAt)
-          : undefined,
-        summary: publishedSummary,
-      };
-    });
-
-    logger.info('Publish step finished successfully');
+    logger.info('Sync job completed', { status: syncStatus });
     return getJob(jobId);
   } catch (error) {
     logger.error('Sync job crashed', error);
@@ -521,7 +431,7 @@ export async function executeSyncJob(jobId: string) {
     updateJob(jobId, (job) => {
       const failedMessage = toErrorMessage(error);
       const runningStep = job.steps.find((step) => step.status === 'running')?.step;
-      const failedStepName = runningStep ?? job.effectiveTables.find(() => true) ?? 'publish';
+      const failedStepName = runningStep ?? job.effectiveTables[0];
       const failedStepJob = updateStep(job, failedStepName, {
         status: 'failed',
         finishedAt: new Date().toISOString(),
@@ -534,8 +444,6 @@ export async function executeSyncJob(jobId: string) {
           '同步任务异常终止，剩余步骤已跳过',
         ),
         status: 'failed',
-        publishStatus:
-          failedStepName === 'publish' ? 'publish_failed' : 'not_required',
         finishedAt: new Date().toISOString(),
         durationMs: job.startedAt
           ? Date.now() - Date.parse(job.startedAt)

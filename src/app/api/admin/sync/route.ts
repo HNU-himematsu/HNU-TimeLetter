@@ -1,9 +1,8 @@
 /**
- * @deprecated 该路由为兼容旧版调用保留，不推荐使用。
- * 请使用以下新接口：
- *   - 触发同步任务：POST /api/admin/sync/jobs
- *   - 读取/修改调度配置：GET/PATCH /api/admin/sync/config
- * 旧版 action=trigger / action=update 的请求形态仍可用，但不再迭代新功能。
+ * 同步兼容路由。
+ * 支持 action=trigger（触发同步作业）与 action=update（更新调度配置）两种请求形态，
+ * 内部委托给 /api/admin/sync/jobs 和 /api/admin/sync/config 对应的执行逻辑。
+ * GET 返回当前同步状态与配置。
  */
 import { NextResponse } from 'next/server';
 import { checkAuth } from '@/lib/admin/auth';
@@ -34,10 +33,7 @@ function toLegacyResponse() {
 
   const lastMessage = currentJob
     ? '同步任务正在执行中'
-    : lastJob?.errors[0] ??
-      (lastJob?.publishStatus === 'pending'
-        ? '数据已同步，尚未发布'
-        : undefined);
+    : lastJob?.errors[0] ?? undefined;
 
   return {
     sync: {

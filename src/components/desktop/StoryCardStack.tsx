@@ -119,7 +119,7 @@ function CardComponent({ story, isTop, offset, storyCount, sharedDragX, zIndex, 
     // 我们需要将它从屏幕外平滑移动回 x=0，实现“从同方向插入底部”的效果
     useEffect(() => {
         if (!isTop && x.get() !== 0) {
-            // 增加一点阻尼(damping)，使飞走后其他卡片补位更像物理沉降
+            // damping 值使卡片在飞出后补位时呈现物理沉降感
             animate(x, 0, { type: "spring", stiffness: 280, damping: 28 });
         }
     }, [isTop, x]);

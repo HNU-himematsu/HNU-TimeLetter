@@ -1,6 +1,6 @@
 # 后台管理 API 文档
 
-> 版本：v1.1
+> 版本：v1.2
 > Base URL：`/api/admin`
 > 普通接口需通过 Cookie 鉴权；Webhook 接口使用 Bearer Token 鉴权
 
@@ -12,10 +12,13 @@
 - [登录接口](#2-登录接口)
 - [同步配置接口](#3-同步配置接口)
 - [同步任务接口](#4-同步任务接口)
-- [前台公告接口](#5-前台公告接口)
-- [Webhook 接口](#6-webhook-接口飞书自动化)
-- [错误码一览](#7-错误码一览)
-- [数据类型定义](#8-数据类型定义)
+- [公告配置接口](#5-公告配置接口管理后台)
+- [同步兼容接口](#6-同步兼容接口)
+- [前台数据接口](#7-前台数据接口)
+- [前台公告接口](#8-前台公告接口)
+- [Webhook 接口](#9-webhook-接口飞书自动化)
+- [错误码一览](#10-错误码一览)
+- [数据类型定义](#11-数据类型定义)
 
 ---
 
@@ -135,36 +138,37 @@ Content-Type: application/json
   "config": {
     "enabled": true,
     "cron": "0 2 * * *",
-    "defaultTables": ["locations", "stories", "creation_headers", "creation_board", "contributors"],
-    "defaultJobKind": "sync-data",
-    "dataPublishMode": "build_time"
+    "defaultTables": ["locations", "stories", "creation_headers", "creation_board", "contributors"]
   },
   "runtime": {
     "currentJobId": null,
-    "lastJobId": "sync-1746028800000-ab12",
-    "lastRunAt": "2026-04-30T10:00:00.000Z",
-    "lastPublishAt": "2026-04-30T10:10:00.000Z",
-    "hasPendingPublish": false
+    "lastJobId": "sync_20260430100000_ab12cd",
+    "lastRunAt": "2026-04-30T10:00:00.000Z"
   },
   "availableTables": [
     {
       "key": "locations",
-      "label": "地点",
+      "label": "地点表",
       "dependsOn": []
     },
     {
       "key": "stories",
-      "label": "故事",
-      "dependsOn": ["locations"]
+      "label": "故事表",
+      "dependsOn": []
+    },
+    {
+      "key": "creation_headers",
+      "label": "创作板-头表",
+      "dependsOn": []
     },
     {
       "key": "creation_board",
-      "label": "创作公示板",
+      "label": "创作板-主表",
       "dependsOn": []
     },
     {
       "key": "contributors",
-      "label": "鸣谢名单",
+      "label": "参与贡献名单",
       "dependsOn": []
     }
   ],
@@ -181,8 +185,6 @@ Content-Type: application/json
 | `enabled` | `boolean` | 定时任务是否启用 |
 | `cron` | `string` | Cron 表达式 |
 | `defaultTables` | `SyncTableKey[]` | 调度器默认同步的表 |
-| `defaultJobKind` | `SyncJobKind` | 调度器默认任务类型 |
-| `dataPublishMode` | `"build_time"` | 数据发布模式（固定值） |
 
 `runtime` 对象：
 
@@ -191,8 +193,6 @@ Content-Type: application/json
 | `currentJobId` | `string \| null` | 当前运行中的任务 ID |
 | `lastJobId` | `string \| null` | 最近一次任务 ID |
 | `lastRunAt` | `string \| null` | 上次同步完成时间（ISO 8601） |
-| `lastPublishAt` | `string \| null` | 上次发布完成时间（ISO 8601） |
-| `hasPendingPublish` | `boolean` | 是否存在已同步但未发布的数据 |
 
 顶层字段：
 
@@ -215,8 +215,7 @@ Content-Type: application/json
 {
   "enabled": true,
   "cron": "0 */6 * * *",
-  "defaultTables": ["locations", "stories"],
-  "defaultJobKind": "sync-data"
+  "defaultTables": ["locations", "stories"]
 }
 ```
 
@@ -225,7 +224,6 @@ Content-Type: application/json
 | `enabled` | `boolean` | 是否启用定时任务 |
 | `cron` | `string` | Cron 表达式，至少 5 段 |
 | `defaultTables` | `SyncTableKey[]` | 默认同步表，不可为空数组 |
-| `defaultJobKind` | `SyncJobKind` | 默认任务类型 |
 
 **成功响应** `200 OK`
 
@@ -234,12 +232,14 @@ Content-Type: application/json
 **参数错误** `400 Bad Request`
 
 ```json
-{ "message": "Invalid cron expression" }
+{ "message": "不支持的同步表: unknown_table" }
 ```
 
 ---
 
 ## 4. 同步任务接口
+
+同步任务从飞书多维表格拉取数据，写入 `src/data/` 目录下的 JSON 产物文件。前端通过公开 API（`/api/content`、`/api/contributors`、`/api/creation-board`）在运行时读取这些文件，无需构建或重启服务。
 
 ### 4.1 GET /api/admin/sync/jobs — 任务列表
 
@@ -263,10 +263,9 @@ GET /api/admin/sync/jobs?limit=10
 {
   "items": [
     {
-      "jobId": "sync-1746028800000-ab12",
+      "jobId": "sync_20260430100000_ab12cd",
       "kind": "sync-data",
       "status": "success",
-      "publishStatus": null,
       "tables": ["locations", "stories"],
       "effectiveTables": ["locations", "stories"],
       "dependencyMode": "read_local",
@@ -337,7 +336,7 @@ GET /api/admin/sync/jobs?limit=10
 
 ```json
 {
-  "jobId": "sync-1746028800000-ab12",
+  "jobId": "sync_20260430100000_ab12cd",
   "status": "queued",
   "kind": "sync-data",
   "tables": ["locations", "stories"],
@@ -350,15 +349,15 @@ GET /api/admin/sync/jobs?limit=10
 
 ```json
 {
-  "message": "A sync job is already running",
-  "currentJobId": "sync-1746028700000-xy99"
+  "message": "已有同步任务正在执行",
+  "currentJobId": "sync_20260430095900_xy99zz"
 }
 ```
 
 **参数错误** `400 Bad Request`
 
 ```json
-{ "message": "Invalid table key: unknown_table" }
+{ "message": "不支持的同步表: unknown_table" }
 ```
 
 ---
@@ -371,7 +370,7 @@ GET /api/admin/sync/jobs?limit=10
 
 | 参数 | 说明 |
 |---|---|
-| `jobId` | 任务 ID，格式为 `sync-{timestamp}-{随机4位}` |
+| `jobId` | 任务 ID，格式为 `sync_{YYYYMMDDHHmmss}_{随机6位}` |
 
 **成功响应** `200 OK`
 
@@ -379,10 +378,9 @@ GET /api/admin/sync/jobs?limit=10
 
 ```json
 {
-  "jobId": "sync-1746028800000-ab12",
-  "kind": "sync-data-and-publish",
+  "jobId": "sync_20260430100000_ab12cd",
+  "kind": "sync-data",
   "status": "success",
-  "publishStatus": "published",
   "tables": ["locations", "stories"],
   "effectiveTables": ["locations", "stories"],
   "dependencyMode": "read_local",
@@ -393,9 +391,8 @@ GET /api/admin/sync/jobs?limit=10
   "createdAt": "2026-04-30T10:00:00.000Z",
   "startedAt": "2026-04-30T10:00:00.200Z",
   "syncedAt": "2026-04-30T10:01:30.000Z",
-  "publishedAt": "2026-04-30T10:04:00.000Z",
-  "finishedAt": "2026-04-30T10:04:00.000Z",
-  "durationMs": 240000,
+  "finishedAt": "2026-04-30T10:01:30.000Z",
+  "durationMs": 90000,
   "steps": [
     {
       "step": "locations",
@@ -426,15 +423,6 @@ GET /api/admin/sync/jobs?limit=10
       },
       "warnings": ["记录 recXXX 缺少主图，已跳过图片处理"],
       "errors": []
-    },
-    {
-      "step": "publish",
-      "status": "success",
-      "startedAt": "2026-04-30T10:01:30.000Z",
-      "finishedAt": "2026-04-30T10:04:00.000Z",
-      "summary": {},
-      "warnings": [],
-      "errors": []
     }
   ],
   "summary": {
@@ -447,13 +435,14 @@ GET /api/admin/sync/jobs?limit=10
     "filesWritten": [
       "src/config/locations.json",
       "src/data/content.json"
-    ],
-    "published": true
+    ]
   },
   "warnings": ["记录 recXXX 缺少主图，已跳过图片处理"],
   "errors": []
 }
 ```
+
+> 任务步骤（`steps`）中的每一项对应一张同步表。同步完成写入 JSON 产物文件后，前端通过 `/api/content`、`/api/contributors`、`/api/creation-board` 等运行时 API 直接读取最新数据，无需构建或重启服务。
 
 **任务不存在** `404 Not Found`
 
@@ -507,7 +496,9 @@ GET /api/admin/sync/jobs?limit=10
 
 ---
 
-### 4.5 GET /api/admin/announcement — 读取公告配置
+## 5. 公告配置接口（管理后台）
+
+### 5.1 GET /api/admin/announcement — 读取公告配置
 
 **需要鉴权 Cookie**
 
@@ -522,7 +513,9 @@ GET /api/admin/sync/jobs?limit=10
 }
 ```
 
-### 4.6 PATCH /api/admin/announcement — 更新公告配置
+---
+
+### 5.2 PATCH /api/admin/announcement — 更新公告配置
 
 **需要鉴权 Cookie**
 
@@ -537,6 +530,11 @@ GET /api/admin/sync/jobs?limit=10
 }
 ```
 
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `docUrl` | `string` | 飞书文档链接（可选，不能为空串） |
+| `featureConfig` | `object` | 功能配置（可选，必须为对象） |
+
 **成功响应** `200 OK`：返回更新后的公告配置。
 
 **参数错误** `400 Bad Request`
@@ -547,9 +545,251 @@ GET /api/admin/sync/jobs?limit=10
 
 ---
 
-## 5. 前台公告接口
+## 6. 同步兼容接口
 
-### 5.1 GET /api/announcement-config — 读取前台公告配置
+### 6.1 GET /api/admin/sync — 读取同步状态
+
+**需要鉴权 Cookie**
+
+兼容旧版 API，返回同步状态与配置摘要。
+
+**请求参数**：无
+
+**成功响应** `200 OK`
+
+```json
+{
+  "sync": {
+    "enabled": true,
+    "cron": "0 0 * * *",
+    "lastRun": "2026-04-30T10:01:30.000Z",
+    "status": "idle",
+    "lastMessage": null
+  }
+}
+```
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `enabled` | `boolean` | 定时任务是否启用 |
+| `cron` | `string` | Cron 表达式 |
+| `lastRun` | `string \| null` | 上次同步完成时间 |
+| `status` | `"idle" \| "running" \| "success" \| "failed"` | 当前同步状态 |
+| `lastMessage` | `string \| null` | 上次执行的消息（错误信息或状态提示） |
+
+---
+
+### 6.2 POST /api/admin/sync — 同步操作
+
+**需要鉴权 Cookie**
+
+支持两种 action：触发同步任务（`trigger`）和更新调度配置（`update`）。
+
+#### action = "trigger" — 触发同步
+
+```json
+{
+  "action": "trigger",
+  "tables": ["locations", "stories"]
+}
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| `action` | `"trigger"` | 是 | 操作类型 |
+| `tables` | `string[]` | 否 | 要同步的表 key 列表 |
+
+**成功响应** `200 OK`
+
+```json
+{ "message": "Sync triggered", "jobId": "sync_20260430100000_ab12cd" }
+```
+
+**任务冲突** `409 Conflict`
+
+```json
+{
+  "message": "已有同步任务正在执行",
+  "currentJobId": "sync_20260430095900_xy99zz"
+}
+```
+
+#### action = "update" — 更新调度配置
+
+```json
+{
+  "action": "update",
+  "enabled": true,
+  "cron": "0 */6 * * *"
+}
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| `action` | `"update"` | 是 | 操作类型 |
+| `enabled` | `boolean` | 否 | 是否启用定时任务 |
+| `cron` | `string` | 否 | Cron 表达式 |
+
+**成功响应** `200 OK`：返回与 `GET /api/admin/sync` 相同的状态对象。
+
+**无效 action** `400 Bad Request`
+
+```json
+{ "message": "Invalid action" }
+```
+
+---
+
+## 7. 前台数据接口
+
+以下接口供前端页面读取数据，**无需鉴权**，直接从 `src/data/` 目录下的 JSON 产物文件读取。数据由飞书同步任务生成与更新。
+
+### 7.1 GET /api/content — 读取地点与故事内容
+
+**无需鉴权**
+
+**请求参数**：无
+
+**成功响应** `200 OK`
+
+```json
+{
+  "locations": [
+    {
+      "id": "loc_001",
+      "name": "图书馆",
+      "x": 25,
+      "y": 60,
+      "stories": [
+        {
+          "id": "story_001",
+          "characterId": "char_001",
+          "characterName": "小明",
+          "avatarUrl": "https://oss.example.com/avatars/xiaoming.png",
+          "mainImageUrl": "https://oss.example.com/images/story_001.png",
+          "content": "那天在图书馆，我第一次遇见了她……",
+          "author": "Aki",
+          "locationId": "loc_001",
+          "locationName": "图书馆"
+        }
+      ]
+    }
+  ]
+}
+```
+
+| 响应字段 | 类型 | 说明 |
+|---|---|---|
+| `locations` | `LocationPoint[]` | 地点列表，每个地点包含其下的故事 |
+| `locations[].id` | `string` | 地点 ID |
+| `locations[].name` | `string` | 地点名称 |
+| `locations[].x` | `number` | X 坐标（0-100%，SVG 坐标系） |
+| `locations[].y` | `number` | Y 坐标（0-100%，SVG 坐标系） |
+| `locations[].stories` | `Story[]` | 该地点下的故事列表 |
+| `stories[].id` | `string` | 故事 ID |
+| `stories[].characterId` | `string` | 角色 ID |
+| `stories[].characterName` | `string` | 角色名称 |
+| `stories[].avatarUrl` | `string` | Q 版头像 URL |
+| `stories[].mainImageUrl` | `string` | 高清大图 URL |
+| `stories[].content` | `string` | 故事文本内容 |
+| `stories[].author` | `string` | 作者 |
+| `stories[].locationId` | `string` | 关联地点 ID |
+| `stories[].locationName` | `string` | 关联地点名称（可选） |
+
+**数据源**：`src/data/content.json`
+
+---
+
+### 7.2 GET /api/contributors — 读取鸣谢名单
+
+**无需鉴权**
+
+**请求参数**：无
+
+**成功响应** `200 OK`
+
+```json
+{
+  "contributors": [
+    {
+      "id": "contrib_001",
+      "name": "张三",
+      "role": "程序开发",
+      "message": "感谢这个项目的每一位参与者"
+    }
+  ]
+}
+```
+
+| 响应字段 | 类型 | 说明 |
+|---|---|---|
+| `contributors` | `Contributor[]` | 参与贡献名单 |
+| `contributors[].id` | `string` | 贡献者 ID |
+| `contributors[].name` | `string` | 贡献者名称 |
+| `contributors[].role` | `string` | 角色/分工（可选） |
+| `contributors[].message` | `string` | 留言（可选） |
+
+**数据源**：`src/data/contributors.json`
+
+---
+
+### 7.3 GET /api/creation-board — 读取创作公示板
+
+**无需鉴权**
+
+**请求参数**：无
+
+**成功响应** `200 OK`
+
+```json
+{
+  "ideas": [
+    {
+      "id": "idea_001",
+      "cardId": "card_01",
+      "content": "在图书馆门口设计一个相遇场景",
+      "author": "匿名",
+      "images": ["https://oss.example.com/images/idea_001.png"],
+      "createdAt": "2026-04-30T10:00:00.000Z",
+      "tags": "场景设计",
+      "sortOrder": 1
+    }
+  ],
+  "headers": [
+    {
+      "cardId": "card_01",
+      "location": "图书馆",
+      "character": "小明",
+      "sortOrder": 1
+    }
+  ]
+}
+```
+
+| 响应字段 | 类型 | 说明 |
+|---|---|---|
+| `ideas` | `CreationIdea[]` | 创作公示板主表记录 |
+| `ideas[].id` | `string` | 记录 ID |
+| `ideas[].cardId` | `string` | 所属卡片 ID |
+| `ideas[].content` | `string` | 内容 |
+| `ideas[].author` | `string` | 作者 |
+| `ideas[].images` | `string[]` | 图片 URL 列表 |
+| `ideas[].createdAt` | `string` | 创建时间（ISO 8601） |
+| `ideas[].tags` | `string` | 标签 |
+| `ideas[].sortOrder` | `number` | 排序权重 |
+| `headers` | `CardHeaderInfo[]` | 创作公示板头表（卡片元数据） |
+| `headers[].cardId` | `string` | 卡片 ID |
+| `headers[].location` | `string` | 地点名称 |
+| `headers[].character` | `string` | 角色名称 |
+| `headers[].sortOrder` | `number` | 排序权重 |
+
+**数据源**：`src/data/creation-board.json` + `src/data/creation-board-headers.json`
+
+---
+
+## 8. 前台公告接口
+
+### 8.1 GET /api/announcement-config — 读取前台公告配置
 
 **无需鉴权**，前台弹窗打开时读取。
 
@@ -564,7 +804,9 @@ GET /api/admin/sync/jobs?limit=10
 }
 ```
 
-### 5.2 GET /api/feishu-jsapi-signature — 生成飞书 JSAPI 签名
+---
+
+### 8.2 GET /api/feishu-jsapi-signature — 生成飞书 JSAPI 签名
 
 **无需 Cookie。** 查询参数：`url` 为当前页面完整 URL。
 
@@ -594,13 +836,13 @@ GET /api/admin/sync/jobs?limit=10
 
 ---
 
-## 6. Webhook 接口（飞书自动化）
+## 9. Webhook 接口（飞书自动化）
 
-### 6.1 POST /api/admin/sync/webhook — 飞书自动化触发同步
+### 9.1 POST /api/admin/sync/webhook — 飞书自动化触发同步
 
 **不需要 Cookie，使用 Bearer Token 鉴权。**
 
-专为飞书自动化设计：当飞书多维表格有新记录时，自动触发 `creation_board` 同步。任务异步执行，接口立即返回。
+专为飞书自动化设计：当飞书多维表格有新记录时，自动触发 `creation_board` 同步。任务异步执行，接口立即返回。同步完成后，前端通过运行时 API 直接读取最新数据，无需构建或重启。
 
 **鉴权方式（任选其一）**
 
@@ -609,11 +851,17 @@ GET /api/admin/sync/jobs?limit=10
 | 请求头 | `Authorization: Bearer <SYNC_WEBHOOK_SECRET>` | 推荐，密锁不暗藏在 URL 中 |
 | 查询参数 | `?secret=<SYNC_WEBHOOK_SECRET>` | 适用于不支持自定义 Header 的飞书自动化配置 |
 
-**密镰来源**：环境变量 `SYNC_WEBHOOK_SECRET`（优先），未设置时回退使用 `ADMIN_PASSWORD`。
+**密锁来源**：环境变量 `SYNC_WEBHOOK_SECRET`（优先），未设置时回退使用 `ADMIN_PASSWORD`。
 
 > 建议单独设置 `SYNC_WEBHOOK_SECRET`，避免将管理员密码暗藏在 URL 日志中。
 
 **请求体**：可为空，也可以是飞书自动化传递的任意 JSON（服务端不使用请求体内容）。
+
+**查询参数**
+
+| 参数 | 类型 | 默认值 | 说明 |
+|---|---|---|---|
+| `tables` | `string` | `creation_board` | 逗号分隔的同步表 key，例如 `creation_board,creation_headers` |
 
 **成功响应** `202 Accepted`
 
@@ -623,6 +871,12 @@ GET /api/admin/sync/jobs?limit=10
   "status": "queued",
   "message": "同步任务已创建"
 }
+```
+
+**参数错误** `400 Bad Request`
+
+```json
+{ "message": "不支持的同步表: unknown_table" }
 ```
 
 **鉴权失败** `401 Unauthorized`
@@ -636,7 +890,7 @@ GET /api/admin/sync/jobs?limit=10
 ```json
 {
   "message": "已有同步任务运行中，请等待完成后重试",
-  "currentJobId": "sync_20260430095900_xy99"
+  "currentJobId": "sync_20260430095900_xy99zz"
 }
 ```
 
@@ -648,7 +902,9 @@ GET /api/admin/sync/jobs?limit=10
 
 **飞书自动化配置示例**
 
-在飞书自动化中，选择「发送 HTTP 请求」动作，配置如下：
+在飞书自动化中，选择「发送 HTTP 请求」动作。
+
+#### 配置一：仅同步创作板主表
 
 | 配置项 | 内容 |
 |---|---|
@@ -657,15 +913,23 @@ GET /api/admin/sync/jobs?limit=10
 | 请求头 | `Authorization: Bearer <SYNC_WEBHOOK_SECRET>` |
 | 请求体 | 空即可 |
 
-或使用查询参数方式（不支持自定义 Header 时）：
+#### 配置二：同步创作板主表 + 头表
 
-```
-https://himematsu.cn/api/admin/sync/webhook?secret=<SYNC_WEBHOOK_SECRET>
-```
+| 配置项 | 内容 |
+|---|---|
+| 请求方法 | `POST` |
+| URL | `https://himematsu.cn/api/admin/sync/webhook?tables=creation_board,creation_headers` |
+| 请求头 | `Authorization: Bearer <SYNC_WEBHOOK_SECRET>` |
+| 请求体 | 空即可 |
+
+> 使用查询参数鉴权方式时，将 `secret` 参数追加到 URL 末尾即可，例如：
+> ```
+> https://himematsu.cn/api/admin/sync/webhook?secret=<SYNC_WEBHOOK_SECRET>&tables=creation_board,creation_headers
+> ```
 
 ---
 
-## 7. 错误码一览
+## 10. 错误码一览
 
 | 状态码 | 含义 | 场景 |
 |---|---|---|
@@ -680,18 +944,17 @@ https://himematsu.cn/api/admin/sync/webhook?secret=<SYNC_WEBHOOK_SECRET>
 
 ---
 
-## 8. 数据类型定义
+## 11. 数据类型定义
 
 ### SyncJobKind
 
 ```ts
-type SyncJobKind = 'sync-data' | 'sync-data-and-publish';
+type SyncJobKind = 'sync-data';
 ```
 
 | 值 | 说明 |
 |---|---|
-| `sync-data` | 仅同步数据到产物文件，不执行构建/重启 |
-| `sync-data-and-publish` | 同步数据后继续执行构建与重启 |
+| `sync-data` | 从飞书多维表格同步数据到 `src/data/` 目录下的 JSON 产物文件 |
 
 ### SyncTableKey
 
@@ -703,9 +966,9 @@ type SyncTableKey = keyof SyncTableOutputMap;
 |---|---|---|
 | `locations` | 地点表 | `src/config/locations.json` |
 | `stories` | 故事表 | `src/data/content.json` |
-| `creation_headers` | 创作公示板头表 | `src/data/creation-board-headers.json` |
-| `creation_board` | 创作公示板 | `src/data/creation-board.json` |
-| `contributors` | 鸣谢名单 | `src/data/contributors.json` |
+| `creation_headers` | 创作板-头表 | `src/data/creation-board-headers.json` |
+| `creation_board` | 创作板-主表 | `src/data/creation-board.json` |
+| `contributors` | 参与贡献名单 | `src/data/contributors.json` |
 
 ### DependencyMode
 
@@ -734,23 +997,10 @@ type SyncJobStatus = 'queued' | 'running' | 'success' | 'partial_success' | 'fai
 | `failed` | 执行失败，产物未更新 |
 | `canceled` | 已取消 |
 
-### SyncPublishStatus
+### SyncStepStatus
 
 ```ts
-type SyncPublishStatus = 'not_required' | 'pending' | 'building' | 'published' | 'publish_failed';
-```
-
-| 值 | 说明 |
-|---|---|
-| `not_required` | 任务类型为 `sync-data`，无需发布 |
-| `building` | 发布阶段执行中（build + restart） |
-| `published` | 发布成功，线上页面已更新 |
-| `publish_failed` | 构建或重启失败，线上页面仍使用旧数据 |
-
-### SyncJobStepStatus
-
-```ts
-type SyncJobStepStatus = 'pending' | 'running' | 'success' | 'success_with_warnings' | 'skipped' | 'failed';
+type SyncStepStatus = 'pending' | 'running' | 'success' | 'success_with_warnings' | 'skipped' | 'failed';
 ```
 
 | 值 | 说明 |
@@ -759,5 +1009,17 @@ type SyncJobStepStatus = 'pending' | 'running' | 'success' | 'success_with_warni
 | `running` | 执行中 |
 | `success` | 成功 |
 | `success_with_warnings` | 成功但有部分记录异常 |
-| `skipped` | 因依赖缺失被跳过 |
-| `failed` | 失败，无法生成产物 |
+| `skipped` | 因依赖缺失或被终止而跳过 |
+| `failed` | 失败 |
+
+### 数据流说明
+
+```
+飞书多维表格（数据源）
+    ↓ 同步任务（定时/手动/Webhook）
+src/data/*.json（产物文件）
+    ↓ 运行时 API（/api/content, /api/contributors, /api/creation-board）
+前端页面
+```
+
+同步完成后 JSON 产物文件即更新，前端通过运行时 API 读取最新数据，不需要构建或重启服务。

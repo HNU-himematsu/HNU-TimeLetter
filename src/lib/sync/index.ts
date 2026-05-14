@@ -21,7 +21,6 @@ export {
   tableRegistry,
 } from './registry';
 export type {
-  DataPublishMode,
   DependencyMode,
   FeishuAttachment,
   FeishuRecord,
@@ -35,7 +34,6 @@ export type {
   SyncJobRecord,
   SyncJobStatus,
   SyncJobStep,
-  SyncPublishStatus,
   SyncRunRequest,
   SyncRuntimeSummary,
   SyncServices,

@@ -279,7 +279,7 @@ export function GuideLine({ sectionRefs }: GuideLineProps) {
       let rawProgress = Math.max(lenAt(refY_mid), lenAt(refY_startup)) / segTotal;
 
       // 最终 snap：视口底越过鸣谢底边（= 蒙版底 = 交界线）→ 线画完。
-      // 新增的 ~2% 路径全部在蒙版下方，被 overflow:hidden 裁掉，用户看不到跳。
+      // 超出蒙版底边的路径段被 overflow:hidden 硬裁剪，视觉无跳变。
       const viewBottom = scrollY + vp - containerTop;
       if (viewBottom >= svgBottom) {
         rawProgress = 1;

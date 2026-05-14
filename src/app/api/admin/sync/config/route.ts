@@ -29,12 +29,11 @@ export async function PATCH(request: Request) {
   }
 
   try {
-    const body = (await request.json()) as Partial<ReturnType<typeof getSyncConfig>>;
+    const body = (await request.json()) as Partial<ReturnType<typeof getSyncConfig>> & Record<string, unknown>;
     const nextConfig = updateSyncConfig({
       enabled: body.enabled,
       cron: body.cron,
       defaultTables: body.defaultTables,
-      defaultJobKind: body.defaultJobKind,
     });
 
     if (nextConfig.enabled) {

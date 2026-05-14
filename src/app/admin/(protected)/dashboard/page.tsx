@@ -104,22 +104,17 @@ function getStatusLabel(status: string) {
 function getStatusBadgeClass(status?: string) {
   switch (status) {
     case 'running':
-    case 'building':
       return 'bg-blue-100 text-blue-800';
     case 'success':
-    case 'published':
       return 'bg-green-100 text-green-800';
     case 'partial_success':
     case 'success_with_warnings':
     case 'pending':
       return 'bg-amber-100 text-amber-800';
     case 'failed':
-    case 'publish_failed':
       return 'bg-red-100 text-red-800';
     case 'queued':
-      return 'bg-slate-100 text-slate-700';
     case 'skipped':
-    case 'not_required':
       return 'bg-gray-100 text-gray-700';
     default:
       return 'bg-gray-100 text-gray-700';
@@ -787,7 +782,7 @@ export default function DashboardPage() {
                 <div className="min-w-0">
                   <div className="font-medium text-gray-900">{job.jobId}</div>
                   <div className="mt-1 text-sm text-gray-500">
-                    {job.kind} | 创建于 {formatTime(job.createdAt)}
+                    同步任务 | 创建于 {formatTime(job.createdAt)}
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2 text-xs">
@@ -845,11 +840,7 @@ export default function DashboardPage() {
                       className="rounded border border-gray-200 px-3 py-3"
                     >
                       <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div className="text-sm font-medium text-gray-900">
-                          {step.step === 'publish'
-                            ? '发布'
-                            : tableLabelMap[step.step] || step.step}
-                        </div>
+                        <div className="text-sm font-medium text-gray-900">{tableLabelMap[step.step] || step.step}</div>
                         <span
                           className={`rounded px-2 py-1 text-xs font-medium ${getStatusBadgeClass(step.status)}`}
                         >

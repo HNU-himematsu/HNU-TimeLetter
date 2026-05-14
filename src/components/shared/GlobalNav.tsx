@@ -40,7 +40,7 @@ export function GlobalNav() {
   // 不在后台管理路由下渲染
   if (pathname?.startsWith('/admin')) return null;
 
-  // 感知当前处于哪个视觉阶段：纯路由判定，避免状态耦合
+  // 感知当前视觉阶段：纯路由判定
   // - `/creation` → 公示板
   // - `/map`      → 地图
   // - 其余（含 `/`） → 主页

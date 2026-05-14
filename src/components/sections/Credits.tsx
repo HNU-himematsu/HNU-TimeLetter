@@ -42,9 +42,9 @@ function MarqueeRow({
   const copies = 20;
   const multiplied = Array.from({ length: copies }).flatMap(() => items);
   
-  // 因为现在滚动距离变长了（位移了 10 组原始距），为了维持“恒定视觉速度”，时间也要对应放大
+  // shiftMultiplier = copies / 2 = 10，将 20 份副本映射为常量视觉速度
   const shiftMultiplier = copies / 2;
-  // 大幅降低基础速度。使用 15 倍的基数，让动画变得像电影谢幕一样极度缓慢
+  // 动画时长随 items 数量线性增长，以 0.5 倍基数 + 60s 下限营造电影谢幕感
   const duration = Math.max(items.length * shiftMultiplier * speed * 0.5, 60);
 
   return (

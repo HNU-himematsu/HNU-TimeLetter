@@ -90,19 +90,10 @@ export function getRuntimeSummary(): SyncRuntimeSummary {
   const currentLock = getCurrentLock();
   const currentJob = currentLock ? getJob(currentLock.jobId) : null;
   const lastJob = jobs[0] ?? null;
-  const lastPublishedJob = jobs.find((job) => Boolean(job.publishedAt));
-  const hasPendingPublish = jobs.some(
-    (job) =>
-      job.kind === 'sync-data' &&
-      job.status === 'success' &&
-      job.publishStatus === 'pending',
-  );
 
   return {
     currentJobId: currentLock?.jobId ?? null,
     lastJobId: lastJob?.jobId ?? null,
     lastRunAt: currentJob?.syncedAt ?? lastJob?.syncedAt,
-    lastPublishAt: lastPublishedJob?.publishedAt,
-    hasPendingPublish,
   };
 }
