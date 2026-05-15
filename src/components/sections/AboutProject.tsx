@@ -28,10 +28,10 @@ export function AboutProject() {
   const isInView = useInView(contentRef, { once: true, margin: '-20%' });
 
   return (
-    <section className="relative w-full min-h-screen overflow-hidden">
+    <section className="relative w-full min-h-dvh overflow-hidden">
       <motion.div
         ref={contentRef}
-        className="relative z-10 w-full min-h-screen flex items-center"
+        className="relative z-10 w-full min-h-dvh flex items-center"
         initial={{ opacity: 0, y: 60 }}
         animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 60 }}
         transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
