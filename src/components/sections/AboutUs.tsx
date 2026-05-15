@@ -30,14 +30,17 @@ interface TeamMember {
 }
 
 const TEAM_MEMBERS: TeamMember[] = [
-  { name: '成员一', role: '策划 / 统筹', description: '统筹企划全局节奏，负责提案收集、项目排期与团队协调，是企划从构想走向落地的核心推手。' },
-  { name: '成员二', role: '美术 / 后期', description: '主导视觉风格定调，负责 AI 图像生成、人物与场景后期合成，赋予每张展品独特的光影质感。' },
-  { name: '成员三', role: '摄影', description: '深入海大校园取景，以镜头捕捉真实建筑光线与空间感，为 AIGC 合成提供高质量背景素材。' },
-  { name: '成员四', role: '文案 / 脚本', description: '为每一位登场人物撰写背景故事与出场台词，将群友的灵感线索转化为有温度的叙事文本。' },
-  { name: '成员五', role: '前端开发', description: '负责本网站的工程实现，将视觉设计转化为可交互的 Web 体验，打通飞书数据同步与内容展示链路。' },
-  { name: '成员六', role: '运营 / 宣发', description: '运营活动群与 B 站主页，策划内容发布节奏，让企划成果触达更多同好。' },
-  { name: '成员七', role: '社区维护', description: '维护群内创作氛围，沉淀共创灵感，为后续迭代收集来自社区的第一手反馈。' },
+  { name: 'Aki_BG7ZGA', role: '总统筹 / AIGC 合成', description: '统筹企划全局建设与网站工程规划，负责前端设计稿与动效的落地实现，以及核心 AIGC 人物生成与光影合成。', avatar: '/images/avatars/Aki_BG7ZGA.jpg' },
+  { name: '魔炮「Final Spark」', role: '后端开发', description: '负责飞书数据同步系统的架构设计与实现，建立数据结构，打通内容管理与前端展示的数据链路。', avatar: '/images/avatars/魔炮「Final Spark」.jpg' },
+  { name: '折木兑太郎', role: '前端开发', description: '负责移动端适配与页面制作，确保网站在不同设备上均能呈现一致的浏览体验。', avatar: '/images/avatars/折木兑太郎.jpg' },
+  { name: 'Larter', role: '艺术指导 / 视觉设计', description: '主导企划整体视觉风格与艺术定调，负责 Logo、海报及网站 UI 界面设计，为项目确立日系高级感的审美基准。', avatar: '/images/avatars/Larter.jpg' },
+  { name: '不可思议の逆天酱喵', role: '文案 / 宣发', description: '负责撰写公告文案与问卷文案，以文字将企划的理念与进展传达给社群，让每一次发声都兼具温度与质感。', avatar: '/images/avatars/不可思议の逆天酱喵.jpg' },
+  { name: '桜小路ルナ', role: '文案 / 策划', description: '负责收集校园地点提案，梳理群友创意，将零散的灵感整理为可执行的视觉化素材基础。', avatar: '/images/avatars/桜小路ルナ.jpg' },
+  { name: '不是第二深情（青木gachi版）', role: '摄影', description: '深入海大校园取景，以镜头捕捉真实建筑的光线与空间感，为 AIGC 合成提供高质量背景素材。', avatar: '/images/avatars/不是第二深情（青木gachi版）.jpg' },
 ];
+
+const ABOUT_US_PANEL_GAP = '0.75rem';
+const ABOUT_US_PANEL_WIDTH = 'calc(28vw + 17rem)';
 
 // 可视窗口内显示的条目数
 const VISIBLE_COUNT = 5;
@@ -104,6 +107,12 @@ export function AboutUs() {
 
   const currentMemberIndex = rawOffset % TEAM_MEMBERS.length;
   const translateY = (ACTIVE_SLOT - rawOffset) * itemH;
+  const descriptionWidth = isMobile
+    ? `calc((100% - ${ABOUT_US_PANEL_GAP}) * 0.44)`
+    : `calc((100% - ${ABOUT_US_PANEL_GAP}) * 0.5)`;
+  const tickerWidth = isMobile
+    ? `calc((100% - ${ABOUT_US_PANEL_GAP}) * 0.56)`
+    : `calc((100% - ${ABOUT_US_PANEL_GAP}) * 0.5)`;
 
   return (
     <section ref={sectionRef} className="relative w-full min-h-screen overflow-hidden">
@@ -133,7 +142,8 @@ export function AboutUs() {
             transform: 'translateY(-50%)',
             display: 'flex',
             alignItems: 'flex-start',
-            gap: '2rem',
+            gap: ABOUT_US_PANEL_GAP,
+            width: ABOUT_US_PANEL_WIDTH,
           }}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
@@ -142,7 +152,7 @@ export function AboutUs() {
           <div
             style={{
               position: 'relative',
-              width: '28vw',
+              width: descriptionWidth,
               height: itemH * VISIBLE_COUNT,
               flexShrink: 0,
             }}
@@ -178,7 +188,7 @@ export function AboutUs() {
           {/* 竖排 ticker：高度固定，宽度固定（按激活态最大尺寸预留） */}
           <div
             className="relative overflow-hidden flex-shrink-0"
-            style={{ height: itemH * VISIBLE_COUNT, width: '15rem' }}
+            style={{ height: itemH * VISIBLE_COUNT, width: tickerWidth }}
           >
             {/* 上方渐隐遮罩 */}
             <div
@@ -212,18 +222,21 @@ export function AboutUs() {
                 return (
                   <motion.div
                     key={`${i}-${member.name}`}
-                    className="flex items-center gap-5 cursor-pointer select-none"
-                    style={{ height: itemH }}
+                    className="flex w-full items-center justify-end gap-4 cursor-pointer select-none"
+                    style={{ height: itemH, width: '100%' }}
                     animate={{ opacity: isActive ? 1 : 0.28 }}
                     transition={{ duration: 0.35 }}
                     onClick={() => handleClick(i)}
                   >
                     {/* 昵称 */}
                     <span
-                      className="font-serif text-ink-strong tracking-wide transition-all duration-300"
+                      className="min-w-0 flex-1 font-serif text-ink-strong tracking-wide transition-all duration-300"
                       style={{
-                        fontSize: isActive ? 'var(--text-intro)' : 'var(--text-base)',
+                        fontSize: isActive ? 'calc(var(--text-intro) * 0.88)' : 'calc(var(--text-base) * 0.94)',
                         fontWeight: isActive ? 700 : 400,
+                        textAlign: 'right',
+                        lineHeight: isActive ? 1.35 : 1.25,
+                        overflowWrap: 'anywhere',
                       }}
                     >
                       {member.name}
