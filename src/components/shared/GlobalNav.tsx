@@ -8,6 +8,7 @@ import {
   type Transition,
 } from 'framer-motion';
 import { useAppStore } from '@/lib/store';
+import { warmAnnouncement } from '@/lib/announcement-prefetch';
 
 
 /**
@@ -143,10 +144,19 @@ export function GlobalNav() {
           </ul>
         </LayoutGroup>
 
-        {/* 公告圆形按钮：直径与胶囊同宽，磨砂亚克力 + 红色描边，hover 变实心红 */}
+        {/* 公告圆形按钮：直径与胶囊同宽，磨砂亚克力 + 红色描边，hover 变实心红
+         *
+         * 性能：悬停 / 聚焦 / 触屏起手时即调用 warmAnnouncement()，
+         * 在用户真正点击前完成飞书 SDK 与签名/配置的并行预取，
+         * 把端到端的「点击 → 可见」延迟降到最低。
+         */}
         <motion.button
           type="button"
           onClick={openAnnouncement}
+          onMouseEnter={warmAnnouncement}
+          onFocus={warmAnnouncement}
+          onPointerDown={warmAnnouncement}
+          onTouchStart={warmAnnouncement}
           aria-label="活动公告"
           className="relative flex items-center justify-center rounded-full border backdrop-blur-md shadow-sm font-serif tracking-[0.18em]"
           style={{
