@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useState } from 'react';
 import type { CreationCard } from '@/lib/types';
 import { getCardColor } from './utils';
 import CreationNoteEntry from './CreationNoteEntry';
@@ -11,7 +11,7 @@ interface CreationNoteCardProps {
 
 export default function CreationNoteCard({ card }: CreationNoteCardProps) {
   const bgColor = getCardColor(card.cardId);
-  const tiltAngle = useMemo(() => (Math.random() * 2 - 1).toFixed(2), []);
+  const [tiltAngle] = useState(() => (Math.random() * 2 - 1).toFixed(2));
 
   return (
     <div
