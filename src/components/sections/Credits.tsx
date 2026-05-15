@@ -87,7 +87,7 @@ export function Credits() {
   }, [contributors]);
 
   return (
-    <section className="relative w-full min-h-screen flex flex-col justify-center overflow-hidden">
+    <section className="relative w-full min-h-dvh flex flex-col justify-center overflow-hidden">
       <motion.div
         ref={contentRef}
         className="relative z-10 w-full max-w-6xl ml-auto px-8 md:px-16 lg:pr-24 py-20"

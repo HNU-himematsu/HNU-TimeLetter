@@ -179,6 +179,7 @@
   body {
     @apply text-foreground overflow-x-hidden;
     min-height: 100vh;
+    min-height: 100dvh;
     position: relative;
     isolation: isolate;
     /* 画框外层统一为 --site-frame-color；画框内部纸面由 body::before 承担。
@@ -277,6 +278,7 @@ body.intro-scroll-locked {
   overscroll-behavior: none;
   touch-action: none;
   height: 100vh;
+  height: 100dvh;
 }
 
 @layer components {
@@ -323,6 +325,7 @@ body.intro-scroll-locked {
   .site-frame-shell {
     position: relative;
     min-height: 100vh;
+    min-height: 100dvh;
     isolation: isolate;
   }
   .site-frame-border {
@@ -350,6 +353,7 @@ body.intro-scroll-locked {
     top: var(--site-frame-border-width);
     right: var(--site-frame-border-width);
     height: calc(100vh - var(--site-frame-border-width) * 2);
+    height: calc(100dvh - var(--site-frame-border-width) * 2);
   }
 
   /* 丝带 clip-path 显影动画 — 纯 CSS 过渡，性能优于 JS 驱动 */

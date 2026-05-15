@@ -14,7 +14,7 @@ export default function CreationBoardPage({ ideas, headers }: CreationBoardPageP
   const cards = groupIdeasToCards(ideas, headers);
 
   return (
-    <div className="relative min-h-screen bg-background">
+    <div className="relative min-h-dvh bg-background">
       {/* 网格草稿线背景 */}
       <div
         className="pointer-events-none fixed inset-0 z-0"
