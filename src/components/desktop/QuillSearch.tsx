@@ -293,7 +293,7 @@ export function QuillSearch({ onSearchResult }: QuillSearchProps) {
                         {/* ── 信纸（从顶部飘落） ──────────────────────── */}
                         <motion.div
                             className="relative z-10"
-                            initial={{ y: '-100vh', rotate: -8, opacity: 0 }}
+                            initial={{ y: '-100dvh', rotate: -8, opacity: 0 }}
                             animate={
                                 phase === 'burning'
                                     ? { y: 0, rotate: 0, opacity: 1 }

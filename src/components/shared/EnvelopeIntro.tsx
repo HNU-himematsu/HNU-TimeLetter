@@ -434,7 +434,7 @@ export function EnvelopeIntro() {
 
   return (
     <div className="relative w-full z-50" style={{ background: FIELD_BASE }}>
-      <section className="relative h-screen w-full overflow-hidden">
+      <section className="relative h-dvh w-full overflow-hidden">
         {/* ───── Base Layer (z=1)：全幅 #ece9e4 + 顶部 #c23643 斜底色块 + 中心 Logo ───── */}
         <div
           className="absolute inset-0"
@@ -445,7 +445,7 @@ export function EnvelopeIntro() {
             className="absolute inset-0"
             style={{
               background: BLOCK_BASE,
-              clipPath: 'polygon(0 0, 100% 0, 100% 70vh, 0 40vh)',
+              clipPath: 'polygon(0 0, 100% 0, 100% 70dvh, 0 40dvh)',
             }}
           />
           {/* 奶白 Logo：仅在“顶部斜底色块”（#c23643 区）可见。
@@ -455,14 +455,14 @@ export function EnvelopeIntro() {
             className="absolute inset-0 pointer-events-none"
             aria-hidden
             style={{
-              clipPath: 'polygon(0 0, 100% 0, 100% 70vh, 0 40vh)',
+              clipPath: 'polygon(0 0, 100% 0, 100% 70dvh, 0 40dvh)',
             }}
           >
             <div
               className="absolute"
               style={{
                 left: `${LOGO_CENTER_X_RATIO * 100}vw`,
-                top: `${LOGO_CENTER_Y_RATIO * 100}vh`,
+                top: `${LOGO_CENTER_Y_RATIO * 100}dvh`,
                 transform: 'translate(-50%, -50%)',
                 width: `${LOGO_WIDTH_RATIO * 100}vw`,
                 aspectRatio: `${1023.59} / ${396.03}`,
@@ -485,14 +485,14 @@ export function EnvelopeIntro() {
             className="absolute inset-0 pointer-events-none"
             aria-hidden
             style={{
-              clipPath: 'polygon(0 40vh, 100% 70vh, 100% 100%, 0 100%)',
+              clipPath: 'polygon(0 40dvh, 100% 70dvh, 100% 100%, 0 100%)',
             }}
           >
             <div
               className="absolute"
               style={{
                 left: `${LOGO_CENTER_X_RATIO * 100}vw`,
-                top: `${LOGO_CENTER_Y_RATIO * 100}vh`,
+                top: `${LOGO_CENTER_Y_RATIO * 100}dvh`,
                 transform: 'translate(-50%, -50%)',
                 width: `${LOGO_WIDTH_RATIO * 100}vw`,
                 aspectRatio: `${1023.59} / ${396.03}`,
@@ -619,14 +619,14 @@ export function EnvelopeIntro() {
             style={{
               zIndex: 3,
               left: `${ENVELOPE_CENTER_X_RATIO * 100}vw`,
-              top: `${ENVELOPE_CENTER_Y_RATIO * 100}vh`,
+              top: `${ENVELOPE_CENTER_Y_RATIO * 100}dvh`,
               width: envelopeWidth,
               height: envelopeHeight,
               marginLeft: -envelopeWidth / 2,
               marginTop: -envelopeHeight / 2,
               transformOrigin: '50% 50%',
             }}
-            initial={{ y: '-120vh', opacity: 0, rotateX: 6, rotateZ: -5 }}
+            initial={{ y: '-120dvh', opacity: 0, rotateX: 6, rotateZ: -5 }}
             animate={envelopeControls}
           >
             {/* 开信动画容器 */}

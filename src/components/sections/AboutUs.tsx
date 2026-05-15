@@ -13,7 +13,9 @@ import Image from 'next/image';
  *   - 各成员条目沿垂直方向排列，头像 + 昵称靠右对齐。
  *   - 激活项居中显示，头像放大（6rem）且带红色描边；其余项缩小（4rem）并降透明度。
  *   - 每 2.5s 自动向下步进一格，触达末尾后循环回首位。
- *   - translateY 由 Spring 缓动驱动，悬停暂停，点击跳转并重置计时器。
+ *   - translateY 由 Spring 缓动驱动，悬停暂停自动步进。
+ *   - 桌面端：悬停后滚动鼠标滚轮切换成员，阻止页面滚动，300ms 节流防抖。
+ *   - 移动端：点击任意成员条目跳转并重置计时器。
  *   - 上下边缘使用 Background 色（#ece9e4）渐隐遮罩。
  *   - ITEM_H 随视口宽度响应：桌面端 160px，移动端 100px。
  *
@@ -33,7 +35,7 @@ const TEAM_MEMBERS: TeamMember[] = [
   { name: 'Aki_BG7ZGA', role: '总统筹 / AIGC 合成', description: '统筹企划全局建设与网站工程规划，负责前端设计稿与动效的落地实现，以及核心 AIGC 人物生成与光影合成。', avatar: '/images/avatars/Aki_BG7ZGA.jpg' },
   { name: '魔炮「Final Spark」', role: '后端开发', description: '负责飞书数据同步系统的架构设计与实现，建立数据结构，打通内容管理与前端展示的数据链路。', avatar: '/images/avatars/魔炮「Final Spark」.jpg' },
   { name: '折木兑太郎', role: '前端开发', description: '负责移动端适配与页面制作，确保网站在不同设备上均能呈现一致的浏览体验。', avatar: '/images/avatars/折木兑太郎.jpg' },
-  { name: 'Larter', role: '艺术指导 / 视觉设计', description: '主导企划整体视觉风格与艺术定调，负责 Logo、海报及网站 UI 界面设计，为项目确立日系高级感的审美基准。', avatar: '/images/avatars/Larter.jpg' },
+  { name: 'Larter', role: '艺术指导 / 视觉设计', description: '主导企划整体视觉风格与艺术定调，负责 Logo、海报及网站 UI 界面设计，为项目确立日系高级感的审美基准。博丽神社社务所官方，有事请私信2687063239', avatar: '/images/avatars/Larter.jpg' },
   { name: '不可思议の逆天酱喵', role: '文案 / 宣发', description: '负责撰写公告文案与问卷文案，以文字将企划的理念与进展传达给社群，让每一次发声都兼具温度与质感。', avatar: '/images/avatars/不可思议の逆天酱喵.jpg' },
   { name: '桜小路ルナ', role: '文案 / 策划', description: '负责收集校园地点提案，梳理群友创意，将零散的灵感整理为可执行的视觉化素材基础。', avatar: '/images/avatars/桜小路ルナ.jpg' },
   { name: '不是第二深情（青木gachi版）', role: '摄影', description: '深入海大校园取景，以镜头捕捉真实建筑的光线与空间感，为 AIGC 合成提供高质量背景素材。', avatar: '/images/avatars/不是第二深情（青木gachi版）.jpg' },
@@ -52,6 +54,8 @@ const INFINITE_ITEMS = Array.from({ length: REPEAT_COUNT }, () => TEAM_MEMBERS).
 
 export function AboutUs() {
   const sectionRef = useRef<HTMLDivElement>(null);
+  const tickerRef = useRef<HTMLDivElement>(null);
+  const lastWheelTime = useRef(0);
   const isInView = useInView(sectionRef, { once: true, margin: '-20%' });
 
   // rawOffset：INFINITE_ITEMS 中当前激活的索引，初始指向中间副本首项
@@ -100,6 +104,23 @@ export function AboutUs() {
     return () => clearInterval(timer);
   }, [isHovered, timerKey]);
 
+  // 桌面端：悬停区域内滚轮切换成员
+  useEffect(() => {
+    const el = tickerRef.current;
+    if (!el) return;
+    const handleWheel = (e: WheelEvent) => {
+      if (isMobile) return;
+      e.preventDefault();
+      e.stopPropagation(); // 阻止冒泡至 Lenis 的 window 级监听器
+      const now = Date.now();
+      if (now - lastWheelTime.current < 300) return;
+      lastWheelTime.current = now;
+      setRawOffset(prev => prev + (e.deltaY > 0 ? 1 : -1));
+    };
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => el.removeEventListener('wheel', handleWheel);
+  }, [isMobile]);
+
   const handleClick = (globalIdx: number) => {
     setRawOffset(globalIdx);
     setTimerKey(k => k + 1);
@@ -107,23 +128,91 @@ export function AboutUs() {
 
   const currentMemberIndex = rawOffset % TEAM_MEMBERS.length;
   const translateY = (ACTIVE_SLOT - rawOffset) * itemH;
-  const descriptionWidth = isMobile
-    ? `calc((100% - ${ABOUT_US_PANEL_GAP}) * 0.44)`
-    : `calc((100% - ${ABOUT_US_PANEL_GAP}) * 0.5)`;
-  const tickerWidth = isMobile
-    ? `calc((100% - ${ABOUT_US_PANEL_GAP}) * 0.56)`
-    : `calc((100% - ${ABOUT_US_PANEL_GAP}) * 0.5)`;
+  // 独立绝对宽度：将 ticker 与描述列分置不同层叠层时使用
+  const tickerWidthAbs = isMobile
+    ? `calc((${ABOUT_US_PANEL_WIDTH} - ${ABOUT_US_PANEL_GAP}) * 0.56)`
+    : `calc((${ABOUT_US_PANEL_WIDTH} - ${ABOUT_US_PANEL_GAP}) * 0.5)`;
+  const descriptionWidthAbs = isMobile
+    ? `calc((${ABOUT_US_PANEL_WIDTH} - ${ABOUT_US_PANEL_GAP}) * 0.44)`
+    : `calc((${ABOUT_US_PANEL_WIDTH} - ${ABOUT_US_PANEL_GAP}) * 0.5)`;
+  const descriptionRight = `calc(6% + ${tickerWidthAbs} + ${ABOUT_US_PANEL_GAP})`;
+  const panelTop = isMobile ? '64%' : '50%';
+
+  const ease = [0.16, 1, 0.3, 1] as const;
+  // ticker 用 y 同时承担垂直居中（-50%）和入场偏移（+60px），避免 style.transform 与 Framer Motion 冲突
+  const tickerAnim = {
+    initial: { opacity: 0, y: 'calc(-50% + 60px)' } as const,
+    animate: isInView ? { opacity: 1, y: '-50%' } : { opacity: 0, y: 'calc(-50% + 60px)' },
+    transition: { duration: 1, ease },
+  };
+  const textAnim = {
+    initial: { opacity: 0, y: 60 } as const,
+    animate: isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 60 },
+    transition: { duration: 1, ease },
+  };
 
   return (
     <section ref={sectionRef} className="relative w-full min-h-screen overflow-hidden">
+
+      {/* 竖排 ticker — z-0，位于引导线（z-1）下方，渐隐遮罩不会遮住引导线 */}
       <motion.div
-        className="relative z-10 w-full min-h-screen flex items-center"
-        initial={{ opacity: 0, y: 60 }}
-        animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 60 }}
-        transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+        ref={tickerRef}
+        className="overflow-hidden"
+        style={{ position: 'absolute', right: '6%', top: panelTop, zIndex: 0, height: itemH * VISIBLE_COUNT, width: tickerWidthAbs }}
+        {...tickerAnim}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        <div className="absolute inset-x-0 top-0 z-10 pointer-events-none" style={{ height: itemH * 1.2, background: 'linear-gradient(to bottom, #ece9e4 0%, transparent 100%)' }} />
+        <div className="absolute inset-x-0 bottom-0 z-10 pointer-events-none" style={{ height: itemH * 1.2, background: 'linear-gradient(to top, #ece9e4 0%, transparent 100%)' }} />
+        <motion.div
+          className="flex flex-col items-end"
+          animate={{ y: translateY }}
+          transition={skipTransition ? { duration: 0 } : { type: 'spring', stiffness: 200, damping: 30 }}
+        >
+          {INFINITE_ITEMS.map((member, i) => {
+            const isActive = i === rawOffset;
+            return (
+              <motion.div
+                key={`${i}-${member.name}`}
+                className={`flex w-full items-center justify-end gap-4 select-none ${isMobile ? 'cursor-pointer' : 'cursor-default'}`}
+                style={{ height: itemH, width: '100%' }}
+                animate={{ opacity: isActive ? 1 : 0.28 }}
+                transition={{ duration: 0.35 }}
+                onClick={isMobile ? () => handleClick(i) : undefined}
+              >
+                <span
+                  className="min-w-0 flex-1 font-serif text-ink-strong tracking-wide transition-all duration-300"
+                  style={{ fontSize: isActive ? 'calc(var(--text-intro) * 0.88)' : 'calc(var(--text-base) * 0.94)', fontWeight: isActive ? 700 : 400, textAlign: 'right', lineHeight: isActive ? 1.35 : 1.25, overflowWrap: 'anywhere' }}
+                >
+                  {member.name}
+                </span>
+                <motion.div
+                  className="rounded-full bg-paper-strong flex-shrink-0 flex items-center justify-center overflow-hidden border-2"
+                  animate={{ width: isActive ? '6rem' : '4rem', height: isActive ? '6rem' : '4rem', borderColor: isActive ? '#c23643' : '#cbbdb5' }}
+                  transition={{ type: 'spring', stiffness: 220, damping: 28 }}
+                >
+                  {member.avatar ? (
+                    <Image src={member.avatar} alt={member.name} width={96} height={96} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="font-serif text-ink-muted" style={{ fontSize: isActive ? 'var(--text-intro)' : 'var(--text-base)' }}>
+                      {member.name.slice(0, 1)}
+                    </span>
+                  )}
+                </motion.div>
+              </motion.div>
+            );
+          })}
+        </motion.div>
+      </motion.div>
+
+      {/* 文字内容层 — z-10，位于引导线（z-1）上方；pointer-events-none 避免遮挡 ticker 交互 */}
+      <motion.div
+        className="relative z-10 w-full min-h-screen flex items-center pointer-events-none"
+        {...textAnim}
       >
         {/* 左：固定简介 */}
-        <div className="absolute left-[5%] top-[5%] md:top-[14%] max-w-[44%] md:max-w-[30%] text-left">
+        <div className="absolute left-[5%] top-[5%] md:top-[14%] max-w-[44%] md:max-w-[30%] text-left pointer-events-auto">
           <h2 className="font-serif text-ink-strong tracking-[0.02em] mb-8">
             关于我们
           </h2>
@@ -132,147 +221,27 @@ export function AboutUs() {
           </p>
         </div>
 
-        {/* 右侧整体块：absolute 锚定于右侧，垂直居中。
-            描述列与 ticker 列并排，描述文字在列内精确定槽，不受外部 flex 干扰。*/}
+        {/* 描述列：与 ticker 等高，文字在列内绝对定位至激活槽，左对齐，垂直居中 */}
         <div
-          style={{
-            position: 'absolute',
-            right: '6%',
-            top: isMobile ? '64%' : '50%',
-            transform: 'translateY(-50%)',
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: ABOUT_US_PANEL_GAP,
-            width: ABOUT_US_PANEL_WIDTH,
-          }}
+          className="pointer-events-auto"
+          style={{ position: 'absolute', right: descriptionRight, top: panelTop, transform: 'translateY(-50%)', width: descriptionWidthAbs, height: itemH * VISIBLE_COUNT }}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
-          {/* 描述列：与 ticker 等高，文字在列内绝对定位至激活槽，左对齐，垂直居中 */}
-          <div
-            style={{
-              position: 'relative',
-              width: descriptionWidth,
-              height: itemH * VISIBLE_COUNT,
-              flexShrink: 0,
-            }}
-          >
-            <div
-              style={{
-                position: 'absolute',
-                top: ACTIVE_SLOT * itemH,
-                left: 0,
-                right: 0,
-                height: itemH,
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'left',
-              }}
-            >
-              <AnimatePresence mode="wait">
-                <motion.p
-                  key={currentMemberIndex}
-                  className="font-sans text-ink-muted"
-                  style={{ fontSize: 'var(--text-intro)', lineHeight: 1.7, letterSpacing: '0.075em' }}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.28, ease: 'easeInOut' }}
-                >
-                  {TEAM_MEMBERS[currentMemberIndex].description}
-                </motion.p>
-              </AnimatePresence>
-            </div>
-          </div>
-
-          {/* 竖排 ticker：高度固定，宽度固定（按激活态最大尺寸预留） */}
-          <div
-            className="relative overflow-hidden flex-shrink-0"
-            style={{ height: itemH * VISIBLE_COUNT, width: tickerWidth }}
-          >
-            {/* 上方渐隐遮罩 */}
-            <div
-              className="absolute inset-x-0 top-0 z-10 pointer-events-none"
-              style={{
-                height: itemH * 1.2,
-                background: 'linear-gradient(to bottom, #ece9e4 0%, transparent 100%)',
-              }}
-            />
-            {/* 下方渐隐遮罩 */}
-            <div
-              className="absolute inset-x-0 bottom-0 z-10 pointer-events-none"
-              style={{
-                height: itemH * 1.2,
-                background: 'linear-gradient(to top, #ece9e4 0%, transparent 100%)',
-              }}
-            />
-
-            {/* 无限滚动列表（3 倍长度） */}
-            <motion.div
-              className="flex flex-col items-end"
-              animate={{ y: translateY }}
-              transition={
-                skipTransition
-                  ? { duration: 0 }
-                  : { type: 'spring', stiffness: 200, damping: 30 }
-              }
-            >
-              {INFINITE_ITEMS.map((member, i) => {
-                const isActive = i === rawOffset;
-                return (
-                  <motion.div
-                    key={`${i}-${member.name}`}
-                    className="flex w-full items-center justify-end gap-4 cursor-pointer select-none"
-                    style={{ height: itemH, width: '100%' }}
-                    animate={{ opacity: isActive ? 1 : 0.28 }}
-                    transition={{ duration: 0.35 }}
-                    onClick={() => handleClick(i)}
-                  >
-                    {/* 昵称 */}
-                    <span
-                      className="min-w-0 flex-1 font-serif text-ink-strong tracking-wide transition-all duration-300"
-                      style={{
-                        fontSize: isActive ? 'calc(var(--text-intro) * 0.88)' : 'calc(var(--text-base) * 0.94)',
-                        fontWeight: isActive ? 700 : 400,
-                        textAlign: 'right',
-                        lineHeight: isActive ? 1.35 : 1.25,
-                        overflowWrap: 'anywhere',
-                      }}
-                    >
-                      {member.name}
-                    </span>
-
-                    {/* 圆形头像 */}
-                    <motion.div
-                      className="rounded-full bg-paper-strong flex-shrink-0 flex items-center justify-center overflow-hidden border-2"
-                      animate={{
-                        width: isActive ? '6rem' : '4rem',
-                        height: isActive ? '6rem' : '4rem',
-                        borderColor: isActive ? '#c23643' : '#cbbdb5',
-                      }}
-                      transition={{ type: 'spring', stiffness: 220, damping: 28 }}
-                    >
-                      {member.avatar ? (
-                        <Image
-                          src={member.avatar}
-                          alt={member.name}
-                          width={96}
-                          height={96}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <span
-                          className="font-serif text-ink-muted"
-                          style={{ fontSize: isActive ? 'var(--text-intro)' : 'var(--text-base)' }}
-                        >
-                          {member.name.slice(0, 1)}
-                        </span>
-                      )}
-                    </motion.div>
-                  </motion.div>
-                );
-              })}
-            </motion.div>
+          <div style={{ position: 'absolute', top: ACTIVE_SLOT * itemH, left: 0, right: 0, height: itemH, display: 'flex', alignItems: 'center', textAlign: 'left' }}>
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={currentMemberIndex}
+                className="font-sans text-ink-muted"
+                style={{ fontSize: 'var(--text-intro)', lineHeight: 1.7, letterSpacing: '0.075em' }}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.28, ease: 'easeInOut' }}
+              >
+                {TEAM_MEMBERS[currentMemberIndex].description}
+              </motion.p>
+            </AnimatePresence>
           </div>
         </div>
       </motion.div>

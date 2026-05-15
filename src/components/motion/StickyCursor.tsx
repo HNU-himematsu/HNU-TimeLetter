@@ -207,16 +207,18 @@ export function StickyCursor() {
       </svg>
 
       {/*
-       * 外圈轨道：48px 透明圆形，LERP 除数 12。
-       * backdrop-filter 对圆形区域内背景像素施加 feColorMatrix 滤镜。
-       * 深色背景 → 白色圆；浅色背景 → 站色调暗色圆。
-       */}
+        * 外圈轨道：4vw 直径圆形（clamp 44px~64px），LERP 除数 12。
+        * backdrop-filter 对圆形区域内背景像素施加 feColorMatrix 滤镜。
+        * 深色背景 → 白色圆；浅色背景 → 站色调暗色圆。
+        */}
       <motion.div
         className={cn(
           'pointer-events-none fixed left-0 top-0 z-[9999]',
-          'h-12 w-12 rounded-full',
+          'rounded-full',
         )}
         style={{
+          width: 'clamp(44px, 4vw, 64px)',
+          height: 'clamp(44px, 4vw, 64px)',
           x: outerX,
           y: outerY,
           translateX: '-50%',
@@ -228,14 +230,16 @@ export function StickyCursor() {
       />
 
       {/*
-       * 内层精确点：10px 透明圆形，LERP 除数 6。
-       */}
+        * 内层精确点：1.3vw 直径圆形（clamp 14.3px~20.8px），与大圆比例固定，LERP 除数 6。
+        */}
       <motion.div
         className={cn(
           'pointer-events-none fixed left-0 top-0 z-[9999]',
-          'h-2.5 w-2.5 rounded-full',
+          'rounded-full',
         )}
         style={{
+          width: 'clamp(14.3px, 1.3vw, 20.8px)',
+          height: 'clamp(14.3px, 1.3vw, 20.8px)',
           x: innerX,
           y: innerY,
           translateX: '-50%',

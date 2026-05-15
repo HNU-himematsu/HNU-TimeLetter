@@ -8,7 +8,7 @@
  * 详情页打开时锁定 body 滚动，防止穿透。
  */
 
-import { useMemo, useState, useEffect } from 'react';
+import { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Map as MapIcon } from 'lucide-react';
 import { StoryFeed } from './StoryFeed';
@@ -22,6 +22,56 @@ export function MobileExperience() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isMapOpen, setIsMapOpen] = useState(false);
   const contentData = useContentData();
+
+  // ── 浏览器返回键集成 ──
+  // 打开详情/地图模态框时向 history 推入条目，
+  // 按返回键触发 popstate 关闭模态框而非导航到上一页。
+  const detailHistoryActive = useRef(false);
+  const mapHistoryActive = useRef(false);
+
+  useEffect(() => {
+    if (selectedId) {
+      window.history.pushState({ modal: 'detail' }, '');
+      detailHistoryActive.current = true;
+    }
+  }, [selectedId]);
+
+  useEffect(() => {
+    if (isMapOpen) {
+      window.history.pushState({ modal: 'map' }, '');
+      mapHistoryActive.current = true;
+    }
+  }, [isMapOpen]);
+
+  useEffect(() => {
+    const onPopState = () => {
+      if (mapHistoryActive.current) {
+        mapHistoryActive.current = false;
+        setIsMapOpen(false);
+      } else if (detailHistoryActive.current) {
+        detailHistoryActive.current = false;
+        setSelectedId(null);
+      }
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  const closeDetail = useCallback(() => {
+    setSelectedId(null);
+    if (detailHistoryActive.current) {
+      detailHistoryActive.current = false;
+      window.history.back();
+    }
+  }, []);
+
+  const closeMap = useCallback(() => {
+    setIsMapOpen(false);
+    if (mapHistoryActive.current) {
+      mapHistoryActive.current = false;
+      window.history.back();
+    }
+  }, []);
 
   // 详情页或地图打开时锁定 body 滚动，防止穿透
   useEffect(() => {
@@ -37,6 +87,18 @@ export function MobileExperience() {
 
   return (
     <div className="relative w-full h-[100dvh] bg-background flex flex-col overflow-hidden">
+      {/* 网格草稿线背景 */}
+      <div
+        className="pointer-events-none fixed inset-0 z-0"
+        style={{
+          backgroundImage: `
+            linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px)
+          `,
+          backgroundSize: '28px 28px',
+        }}
+      />
+
       {/* 1. Header */}
       <header className="px-6 py-5 flex items-center justify-between border-b border-stone-100 bg-white/80 backdrop-blur-md sticky top-0 z-20">
         <div>
@@ -58,7 +120,7 @@ export function MobileExperience() {
           <MobileDetailModal
             key="detail-modal"
             story={currentStory}
-            onClose={() => setSelectedId(null)}
+            onClose={closeDetail}
           />
         )}
       </AnimatePresence>
@@ -73,7 +135,7 @@ export function MobileExperience() {
       </motion.button>
 
       {/* 5. Static Map Modal */}
-      <StaticMapModal isOpen={isMapOpen} onClose={() => setIsMapOpen(false)} />
+      <StaticMapModal isOpen={isMapOpen} onClose={closeMap} />
     </div>
   );
 }
