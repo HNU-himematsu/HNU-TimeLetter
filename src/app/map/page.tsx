@@ -14,7 +14,7 @@ export default function MapPage() {
   const isMobile = useIsMobile();
 
   return (
-    <main className="relative w-full min-h-screen">
+    <main className="relative w-full min-h-dvh">
       {isMobile ? <MobileExperience /> : <InteractiveMap />}
     </main>
   );

@@ -166,7 +166,7 @@ export function InteractiveMap() {
   const showStory = phase === 'rolled';
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-background">
+    <div className="relative w-full h-dvh overflow-hidden bg-background">
 
       {/* ── 故事面板 ─────────────────────────────────────────────────────────
           z-10，位于地图下方。地图卷起后从右侧"露出"。

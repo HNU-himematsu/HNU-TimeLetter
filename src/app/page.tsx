@@ -54,7 +54,7 @@ export default function Home() {
   // Top Layer / 信封 / Lenis 等需要 viewport 的部分由各自的 `vw > 0` / `mounted` 自门控。
 
   return (
-    <main className="relative w-full min-h-screen">
+    <main className="relative w-full min-h-dvh">
       {/* ── 页脚：固定在视口底部 z-0，被上方内容遮盖 ── */}
       <Footer />
 
