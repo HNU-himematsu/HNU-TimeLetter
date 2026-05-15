@@ -11,11 +11,10 @@ export default function CreationBoardHeader() {
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 whitespace-nowrap shrink-0
-                     border border-black/[0.08] bg-white/92 px-3 py-1.5
-                     text-[11px] leading-none text-ink
-                     shadow-[0_2px_6px_rgba(69,39,40,0.08)]
-                     transition-colors duration-150 hover:bg-white"
-          style={{ borderRadius: 0 }}
+                     border border-[#c23643] bg-transparent px-3 py-1.5
+                     text-[11px] leading-none text-stone-800
+                     transition-colors duration-150 hover:bg-[#c23643] hover:text-white"
+          style={{ borderRadius: '9999px' }}
         >
           <span className="text-[12px] leading-none">+</span>
           <span>新建卡片</span>

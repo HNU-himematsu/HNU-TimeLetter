@@ -168,6 +168,18 @@ export function InteractiveMap() {
   return (
     <div className="relative w-full h-dvh overflow-hidden bg-background">
 
+      {/* 网格草稿线背景 */}
+      <div
+        className="pointer-events-none fixed inset-0 z-0"
+        style={{
+          backgroundImage: `
+            linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px)
+          `,
+          backgroundSize: '28px 28px',
+        }}
+      />
+
       {/* ── 故事面板 ─────────────────────────────────────────────────────────
           z-10，位于地图下方。地图卷起后从右侧"露出"。
           key 绑定 activeLocation.id：切换地点时触发重新挂载与进场动画。

@@ -87,6 +87,18 @@ export function MobileExperience() {
 
   return (
     <div className="relative w-full h-[100dvh] bg-background flex flex-col overflow-hidden">
+      {/* 网格草稿线背景 */}
+      <div
+        className="pointer-events-none fixed inset-0 z-0"
+        style={{
+          backgroundImage: `
+            linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px)
+          `,
+          backgroundSize: '28px 28px',
+        }}
+      />
+
       {/* 1. Header */}
       <header className="px-6 py-5 flex items-center justify-between border-b border-stone-100 bg-white/80 backdrop-blur-md sticky top-0 z-20">
         <div>

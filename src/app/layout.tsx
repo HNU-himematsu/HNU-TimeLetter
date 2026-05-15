@@ -72,17 +72,17 @@ export default function RootLayout({
           </ContentStoreProvider>
         </div>
         {/*
-         * 高阶延迟追踪光标（Sticky Cursor）
-         * 挂载于 body 顶层，position: fixed / pointer-events: none / z-index 置顶。
-         * 在 window 级别追踪鼠标坐标并写入 MotionValue（内存变量），
-         * 通过 useSpring 的分层 damping 产生粘稠延迟追踪效果。
-         */}
+          * 高阶延迟追踪光标（Sticky Cursor）
+          * 挂载于 body 顶层，position: fixed / pointer-events: none / z-index 置顶。
+          * 在 window 级别追踪鼠标坐标并写入 MotionValue（内存变量），
+          * 通过 useSpring 的分层 damping 产生粘稠延迟追踪效果。
+          */}
         <StickyCursor />
         {/*
-         * 画框描边层 —— 置于视口最顶层，z-index 高于一切全屏遮罩，
-         * 使 5px #fffdfd 白边在页面切换、过渡、模态、加载态下始终可见。
-         * pointer-events:none 穿透点击，不影响交互。
-         */}
+          * 画框描边层 —— 置于视口最顶层，z-index 高于一切全屏遮罩，
+          * 使 5px #fffdfd 白边在页面切换、过渡、模态、加载态下始终可见。
+          * pointer-events:none 穿透点击，不影响交互。
+          */}
         <div className="site-frame-border" aria-hidden />
       </body>
     </html>

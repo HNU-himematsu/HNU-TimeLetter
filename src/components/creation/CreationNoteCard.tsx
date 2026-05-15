@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import type { CreationCard } from '@/lib/types';
 import { getCardColor } from './utils';
 import CreationNoteEntry from './CreationNoteEntry';
@@ -10,6 +11,7 @@ interface CreationNoteCardProps {
 
 export default function CreationNoteCard({ card }: CreationNoteCardProps) {
   const bgColor = getCardColor(card.cardId);
+  const tiltAngle = useMemo(() => (Math.random() * 2 - 1).toFixed(2), []);
 
   return (
     <div
@@ -17,26 +19,25 @@ export default function CreationNoteCard({ card }: CreationNoteCardProps) {
                  transition-all duration-200 ease-out"
       style={{
         backgroundColor: bgColor,
-        transform: 'translateY(0px)',
+        transform: `rotate(${tiltAngle}deg)`,
         boxShadow: '2px 3px 12px rgba(69,39,40,0.08)',
         borderRadius: 0,
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-4px)';
+        e.currentTarget.style.transform = `rotate(${tiltAngle}deg) translateY(-4px)`;
         e.currentTarget.style.boxShadow = '0 8px 24px rgba(69,39,40,0.14)';
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'translateY(0px)';
+        e.currentTarget.style.transform = `rotate(${tiltAngle}deg)`;
         e.currentTarget.style.boxShadow = '2px 3px 12px rgba(69,39,40,0.08)';
       }}
     >
-      {/* 顶部栏：左侧地点/角色胶囊，右侧新增创意按钮 */}
-      <div className="flex items-center justify-between gap-2 px-4 pt-3 pb-1">
-        {/* 地点 + 角色胶囊（左对齐） */}
+      {/* 顶部栏：地点/角色胶囊 */}
+      <div className="flex items-center gap-2 px-4 pt-3 pb-1">
         <div className="flex items-center gap-1.5 flex-wrap">
           {card.location && (
             <span
-              className="inline-block text-[10px] leading-none px-2.5 py-1
+              className="inline-block text-[11px] leading-none px-3 py-1.5
                          bg-white/60 border border-black/[0.1] text-ink-muted"
               style={{ borderRadius: '9999px' }}
             >
@@ -45,7 +46,7 @@ export default function CreationNoteCard({ card }: CreationNoteCardProps) {
           )}
           {card.character && (
             <span
-              className="inline-block text-[10px] leading-none px-2.5 py-1
+              className="inline-block text-[11px] leading-none px-3 py-1.5
                          bg-white/60 border border-black/[0.1] text-ink-muted"
               style={{ borderRadius: '9999px' }}
             >
@@ -53,22 +54,6 @@ export default function CreationNoteCard({ card }: CreationNoteCardProps) {
             </span>
           )}
         </div>
-
-        {/* 新增创意按钮（右对齐） */}
-        <a
-          href={card.addIdeaUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 whitespace-nowrap shrink-0
-                     border border-black/[0.08] bg-white/92 px-3 py-1.5
-                     text-[11px] leading-none text-ink
-                     shadow-[0_2px_6px_rgba(69,39,40,0.08)]
-                     transition-colors duration-150 hover:bg-white"
-          style={{ borderRadius: 0 }}
-        >
-          <span className="text-[12px] leading-none">+</span>
-          <span>新增创意</span>
-        </a>
       </div>
 
       {/* 卡片内部堆叠项 */}
@@ -80,6 +65,23 @@ export default function CreationNoteCard({ card }: CreationNoteCardProps) {
             isLast={idx === card.entries.length - 1}
           />
         ))}
+      </div>
+
+      {/* 底部：新增创意按钮（居中，75%宽度） */}
+      <div className="flex justify-center px-4 pb-4 pt-2">
+        <a
+          href={card.addIdeaUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center justify-center gap-1 w-3/4
+                     border border-[#c23643] bg-transparent px-3 py-1.5
+                     text-[11px] leading-none text-stone-800
+                     transition-colors duration-150 hover:bg-[#c23643] hover:text-white"
+          style={{ borderRadius: '9999px' }}
+        >
+          <span className="text-[12px] leading-none">+</span>
+          <span>新增创意</span>
+        </a>
       </div>
 
       {/* 底部装饰线 — 模拟便签撕裂边缘 */}
