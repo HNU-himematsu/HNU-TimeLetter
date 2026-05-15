@@ -6,6 +6,7 @@ import { TransitionOverlay } from "@/components/shared/TransitionOverlay";
 import { FeishuDocModal } from "@/components/shared/FeishuDocModal";
 import { StickyCursor } from "@/components/motion/StickyCursor";
 import { ContentStoreProvider } from "@/lib/content-store";
+import { FEISHU_SDK_URL } from "@/lib/announcement-prefetch";
 
 const displayFont = localFont({
   src: "../../public/ChillDINGothic_SemiBold.otf",
@@ -42,6 +43,16 @@ export default function RootLayout({
          * 消除开屏首帧渲染前的网络等待延迟。
          */}
         <link rel="preload" as="image" href="/HIMEMATSU.svg" fetchPriority="high" />
+        {/*
+         * 飞书公告弹窗资源预热 —— 在 HTML 解析阶段就建立 TLS 连接并预下载 SDK 脚本，
+         * 大幅缩短用户点击「公告」后到飞书云文档可见的端到端延迟。
+         * 详见 src/lib/announcement-prefetch.ts。
+         */}
+        <link rel="dns-prefetch" href="//sf1-scmcdn-cn.feishucdn.com" />
+        <link rel="dns-prefetch" href="//himematsu.feishu.cn" />
+        <link rel="preconnect" href="https://sf1-scmcdn-cn.feishucdn.com" />
+        <link rel="preconnect" href="https://himematsu.feishu.cn" />
+        <link rel="preload" as="script" href={FEISHU_SDK_URL} />
         {/*
          * 开屏滚动锁定内联脚本 —— 在任何 JS bundle 执行、React hydration
          * 发生之前同步运行，从首字节即锁住纵向滚动，消除 useEffect 延迟窗口。
