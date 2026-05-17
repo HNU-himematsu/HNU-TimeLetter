@@ -1,5 +1,12 @@
 import { create } from 'zustand';
 
+const DEV_MAP_COORDS_KEY = 'dev:showMapCoordinates';
+
+function readMapCoordsFlag(): boolean {
+  if (typeof window === 'undefined') return false;
+  return localStorage.getItem(DEV_MAP_COORDS_KEY) === 'true';
+}
+
 interface AppState {
   // 信封是否已打开
   isEnvelopeOpened: boolean;
@@ -18,6 +25,10 @@ interface AppState {
   isAnnouncementOpen: boolean;
   openAnnouncement: () => void;
   closeAnnouncement: () => void;
+
+  // [开发工具] 地图坐标显示：在地图页左下角实时显示鼠标所在 SVG 百分比坐标
+  showMapCoordinates: boolean;
+  setShowMapCoordinates: (show: boolean) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -33,4 +44,12 @@ export const useAppStore = create<AppState>((set) => ({
   isAnnouncementOpen: false,
   openAnnouncement: () => set({ isAnnouncementOpen: true }),
   closeAnnouncement: () => set({ isAnnouncementOpen: false }),
+
+  showMapCoordinates: readMapCoordsFlag(),
+  setShowMapCoordinates: (show) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(DEV_MAP_COORDS_KEY, String(show));
+    }
+    set({ showMapCoordinates: show });
+  },
 }));

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { useAppStore } from '@/lib/store';
 import type {
   DependencyMode,
   SyncConfigResponse,
@@ -155,6 +156,9 @@ function getDependencyClosure(
 }
 
 export default function DashboardPage() {
+  const showMapCoordinates = useAppStore((s) => s.showMapCoordinates);
+  const setShowMapCoordinates = useAppStore((s) => s.setShowMapCoordinates);
+
   const [payload, setPayload] = useState<ConfigResponse | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [configForm, setConfigForm] = useState<ConfigFormState | null>(null);
@@ -450,6 +454,32 @@ export default function DashboardPage() {
           {notice.text}
         </div>
       )}
+
+      <section className="rounded border border-gray-200 bg-white p-6 shadow-sm">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">开发工具</h3>
+          <p className="mt-1 text-sm text-gray-600">
+            仅用于调试的辅助功能，不影响用户侧体验。设置持久化至本地浏览器。
+          </p>
+        </div>
+
+        <div className="mt-5 space-y-3">
+          <label className="flex items-center justify-between gap-3 rounded border border-gray-200 px-4 py-3 text-sm">
+            <div>
+              <span className="block font-medium text-gray-800">地图坐标显示</span>
+              <span className="block text-xs text-gray-500 mt-0.5">
+                在地图页左下角实时显示鼠标所在 SVG 横纵坐标百分比 (x / y，范围 0–100)
+              </span>
+            </div>
+            <input
+              type="checkbox"
+              checked={showMapCoordinates}
+              onChange={(e) => setShowMapCoordinates(e.target.checked)}
+              className="h-5 w-5 shrink-0"
+            />
+          </label>
+        </div>
+      </section>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <section className="rounded border border-gray-200 bg-white p-6 shadow-sm">

@@ -1,80 +1,20 @@
 {
   "locations": [
     {
-      "id": "lib-001",
-      "name": "图书馆",
-      "x": 75.19,
-      "y": 25.7,
+      "id": "lkwg",
+      "name": "协同创新中心",
+      "x": 32.88,
+      "y": 22.61,
       "stories": [
         {
-          "id": "recva5SLTWUkRx",
-          "characterId": "char-001",
-          "characterName": "夏目绫",
-          "avatarUrl": "https://himematsu.oss-cn-guangzhou.aliyuncs.com/hnu-timeletter/local-assets/4c51a3b123000cf0d46bcd0b13601913.jpg",
-          "mainImageUrl": "https://himematsu.oss-cn-guangzhou.aliyuncs.com/hnu-timeletter/local-assets/5478df15878f986da09c3c0296841b7e.png",
-          "content": "那天下午，阳光透过图书馆的落地窗洒在书架上。她坐在靠窗的位置，手里捧着一本村上春树的《挪威的森林》。\n\n我走过去，轻声问：\"这个位置有人吗？\"\n\n她抬起头，露出温柔的笑容：\"没有，请坐。\"\n\n就这样，我们成为了图书馆的常客。",
-          "author": "投稿者A",
-          "locationId": "lib-001"
-        },
-        {
-          "id": "recvc2oIEn25q0",
-          "characterId": "char-002",
-          "characterName": "樱井美咲",
-          "avatarUrl": "https://himematsu.oss-cn-guangzhou.aliyuncs.com/hnu-timeletter/f7b72a9728be07e2fe0261ab61c1f899.png",
-          "mainImageUrl": "https://himematsu.oss-cn-guangzhou.aliyuncs.com/hnu-timeletter/0c3e5cf63fae197edb515906215d0d43.png",
-          "content": "修改唯一性：任何一项技术细节、业务规则或架构方案发生变更时，在整个文档库中仅需修改一个文件，无需全局搜索和批量替换。\n状态纯粹性：静态的“功能设计文档”中绝对不包含任何进度状态，所有“已完成”、“开发中”等动态信息完全隔离在唯一的进度文件（如 PROGRESS.md）里。\n引用替代复制：文档之间不存在大段重复的文字或步骤，所有共用的概念、规范或模块，全部通过相对路径链接进行相互引用。\n无冲突溯源：无论是人类开发者还是 AI 助手，在查阅某个特定概念时，只能找到唯一且明确的定义出处，不会出现两个文件描述不一致的情况。",
-          "author": "233",
-          "locationId": "lib-001"
-        }
-      ]
-    },
-    {
-      "id": "lake-001",
-      "name": "东坡湖",
-      "x": 60,
-      "y": 55,
-      "stories": [
-        {
-          "id": "recva5SMva6r9L",
-          "characterId": "char-003",
-          "characterName": "月见栞",
-          "avatarUrl": "https://himematsu.oss-cn-guangzhou.aliyuncs.com/hnu-timeletter/local-assets/f7b72a9728be07e2fe0261ab61c1f899.png",
-          "mainImageUrl": "https://himematsu.oss-cn-guangzhou.aliyuncs.com/hnu-timeletter/local-assets/ad203db919f97099495580c253d5eaa8.png",
-          "content": "傍晚的东坡湖特别美，夕阳把湖面染成了金色。\n\n她站在湖边，手里拿着相机，专注地捕捉着光影的变化。\n\n\"你也喜欢摄影吗？\"我问。\n\n\"嗯，我想把这些美好的瞬间都留下来。\"她转过身，对着我按下了快门。\n\n那张照片，我至今还保存着。",
-          "author": "投稿者C",
-          "locationId": "lake-001"
-        }
-      ]
-    },
-    {
-      "id": "siyuan-001",
-      "name": "思源学堂",
-      "x": 35,
-      "y": 70,
-      "stories": []
-    },
-    {
-      "id": "aaa",
-      "name": "test",
-      "x": 20,
-      "y": 50,
-      "stories": []
-    },
-    {
-      "id": "loc-580934",
-      "name": "新地点 580934",
-      "x": 74.72,
-      "y": 40.45,
-      "stories": [
-        {
-          "id": "recvepv6nh8ZpR",
-          "characterId": "role-912724",
-          "characterName": "未命名角色",
-          "avatarUrl": "https://himematsu.oss-cn-guangzhou.aliyuncs.com/hnu-timeletter/cf1180eef77a500f4f35914c92e1be80.png",
-          "mainImageUrl": "https://himematsu.oss-cn-guangzhou.aliyuncs.com/hnu-timeletter/014aceade10b081630bd9e488bd49c6e.jpg",
-          "content": "test，根据您提供的幻灯片图片，我为您整理了详细的实验报告考核与规范要求。\n\n### 实验考核要求：实验报告（占比 40%）\n\n**一、 基本格式与内容要求**\n\n1. **书写要求**：书写必须规范、整洁。\n2. **报告结构**：报告内容应完整，必须包括以下部分：\n   * 实验名称\n   * 实验目的\n   * 实验原理\n   * 实验仪器及试剂\n   * 实验步骤\n   * 实验数据记录\n   * 数据处理\n   * 结果讨论和实验总结\n   * 误差分析\n   * 思考题\n\n---\n\n**二、 数据处理与结果讨论**\n\n1. **数据处理的硬性规定**：\n   * **凡未做数据处理的，实验报告不及格。**\n   * 数据处理必须包含详细的**处理步骤**。\n   * **作图要求**：必须使用直尺、铅笔、坐标纸进行手工图，或者使用 **Origin** 等计算机软件进行绘图。处理结果需附于实验报告上。\n\n2. **结果讨论的内容建议**：\n   * 结论以及对实验现象的分析解释。\n   * 查阅相关文献的情况。\n   * 对实验结果误差的**定性分析**或**定量计算**。\n   * 实验的心得体会以及对实验的改进意见等。\n\n---\n\n**三、 作图专项规范**\n\n进行数据处理作图时，若使用直角坐标系，需以**自变量为横轴**，**因变量为纵轴**。\n\n**1. 坐标轴比例尺的选择原则**\n\n* **反映精密度**：能表示出全部有效数字，使图上读出的各物理量的精密度与测量时的精密度保持一致。\n* **方便易读**：比例尺的选取应便于阅读。\n  * *适宜*：用坐标轴 1 cm 表示数量 1、2 或 5。\n  * *不太适宜*：表示 3 或 4。\n  * *不妥当*：在一般场合下表示 6、7、8、9。\n* **充分利用图纸**：在满足前两个条件的前提下，应使图形分布合理。\n  * 若无必要，**不必把坐标的原点作为变量的零点**。\n  * 如果曲线是直线或近乎直线的曲线，应尽量将其安置在图纸的对角线附近。\n* **标注清晰**：比例尺选定后，要画上坐标轴，并在**轴旁注明该轴变量的名称及单位**。\n* **图号与标题**：每个图应有图号和简明的标题（即图题），通常安置在**图的下方**。\n\n**2. 规范图的具体检验标准**\n\n一张规范的实验数据处理图必须满足以下所有条件：\n\n* 有文字精炼的标题，且图题的位置正确。\n* 有坐标轴、刻度值及其标注。\n* 坐标轴上的**物理量符号及单位**标注正确。\n* 代表点标示正确、醒目，且**整个图无涂改**。\n* 不在拟合线上的代表点，应**均匀分布在线的两侧**。\n* 线条绘制规范：**直线是笔直的、曲线是光滑的**。\n* 若有拟合曲线，需标注**拟合方程及 R 值**。\n* 包含图例。\n\n如果您还需要针对某一项具体要求进行深入解释，请随时告诉我。",
-          "author": "123",
-          "locationId": "loc-580934"
+          "id": "recvjSMsdMzXTe",
+          "characterId": "shinku",
+          "characterName": "二阶堂真红",
+          "avatarUrl": "https://himematsu.oss-cn-guangzhou.aliyuncs.com/hnu-timeletter/9691300cf0c5a955e30cd0949303238a.png",
+          "mainImageUrl": "",
+          "content": "欢迎浏览“与她的海大时光笺”企划",
+          "author": "Aki_BG7ZGA",
+          "locationId": "lkwg"
         }
       ]
     }
