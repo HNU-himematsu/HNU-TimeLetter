@@ -10,6 +10,7 @@ import { LocationPoint } from '@/lib/types';
 import { useContainedMapSize } from '@/lib/hooks';
 import { getPrimaryStory, getStoryAvatarUrl } from '@/lib/content';
 import { useContentData } from '@/lib/content-store';
+import { useAppStore } from '@/lib/store';
 
 /**
  * InteractiveMap (交互式地图组件)
@@ -69,6 +70,26 @@ export function InteractiveMap() {
   const [bouncingPinId, setBouncingPinId] = useState<string | null>(null);
   /** 搜索命中后暂存目标 locationId，等地图展开完成后执行跳动 */
   const searchTargetRef = useRef<string | null>(null);
+
+  // ─── 开发工具：鼠标坐标追踪 ────────────────────────────────────────────────
+  const showMapCoordinates = useAppStore((s) => s.showMapCoordinates);
+  const mapImageRef = useRef<HTMLDivElement | null>(null);
+  const [mouseCoords, setMouseCoords] = useState<{ x: number; y: number } | null>(null);
+
+  const handleMapMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = mapImageRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setMouseCoords({
+      x: Math.max(0, Math.min(100, x)),
+      y: Math.max(0, Math.min(100, y)),
+    });
+  }, []);
+
+  const handleMapMouseLeave = useCallback(() => {
+    setMouseCoords(null);
+  }, []);
 
   // ─── 容器 & 地图尺寸计算 ──────────────────────────────────────────────────
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
@@ -253,8 +274,11 @@ export function InteractiveMap() {
                *   - 叠加柔和投影以在米色底页上与地图本体分离。
                */}
               <div
+                ref={mapImageRef}
                 className="relative box-content border-[6px] border-white shadow-[0_4px_20px_rgba(0,0,0,0.08)]"
                 style={{ width: mapSize.width, height: mapSize.height }}
+                onMouseMove={showMapCoordinates ? handleMapMouseMove : undefined}
+                onMouseLeave={showMapCoordinates ? handleMapMouseLeave : undefined}
               >
 
                 {/* 地图底图 */}
@@ -338,6 +362,19 @@ export function InteractiveMap() {
           </div>
         </motion.div>
       </motion.div>
+
+      {/* ── 开发工具：坐标显示 ──────────────────────────────────────────────
+          z-40，固定在视口左下角，仅 showMapCoordinates 为 true 时渲染。
+      ──────────────────────────────────────────────────────────────────── */}
+      {showMapCoordinates && (
+        <div className="pointer-events-none absolute bottom-4 left-4 z-40">
+          <div className="rounded bg-black/70 px-3 py-1.5 font-mono text-xs text-white">
+            {mouseCoords
+              ? `x: ${mouseCoords.x.toFixed(2)}  y: ${mouseCoords.y.toFixed(2)}`
+              : 'x: --  y: --'}
+          </div>
+        </div>
+      )}
 
       {/* ── 卷曲阴影 ──────────────────────────────────────────────────────────
           z-25，独立于地图容器。位于 clip 边缘，模拟卷起时的 3D 光影。

@@ -23,6 +23,18 @@
       "location": "2",
       "character": "erwtwert",
       "sortOrder": 22
+    },
+    {
+      "cardId": "KrAf2e",
+      "location": "2",
+      "character": "二阶堂真红",
+      "sortOrder": 23
+    },
+    {
+      "cardId": "UejF0z",
+      "location": "3",
+      "character": "南星明日步",
+      "sortOrder": 24
     }
   ]
 }

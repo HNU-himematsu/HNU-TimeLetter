@@ -1,5 +1,6 @@
 import type {
   CardHeaderInfo,
+  Character,
   Contributor,
   CreationIdea,
   LocationPoint,
@@ -43,6 +44,15 @@ function assertArray(value: unknown, path: string): asserts value is unknown[] {
   if (!Array.isArray(value)) {
     throw new ContentSchemaError(`${path} 必须是数组`);
   }
+}
+
+function validateCharacter(value: unknown, path: string): Character {
+  assertObject(value, path);
+  assertString(value.id, `${path}.id`);
+  assertString(value.name, `${path}.name`);
+  assertString(value.avatarUrl, `${path}.avatarUrl`);
+
+  return value as unknown as Character;
 }
 
 function validateStory(value: unknown, path: string): Story {
@@ -116,6 +126,10 @@ export type CreationBoardData = {
   headers: CardHeaderInfo[];
 };
 
+export type CharactersData = {
+  characters: Character[];
+};
+
 export type ContributorsData = {
   contributors: Contributor[];
 };
@@ -136,6 +150,19 @@ export function validateCreationBoardData(value: unknown): CreationBoardData {
     validateCardHeaderInfo(header, `creationBoard.headers[${index}]`),
   );
   return value as CreationBoardData;
+}
+
+export function validateCharactersData(value: unknown): CharactersData {
+  if (Array.isArray(value)) {
+    value.forEach((character, index) => validateCharacter(character, `characters[${index}]`));
+    return { characters: value as Character[] };
+  }
+  assertObject(value, 'characters');
+  assertArray(value.characters, 'characters.characters');
+  value.characters.forEach((character, index) =>
+    validateCharacter(character, `characters.characters[${index}]`),
+  );
+  return value as CharactersData;
 }
 
 export function validateContributorsData(value: unknown): ContributorsData {

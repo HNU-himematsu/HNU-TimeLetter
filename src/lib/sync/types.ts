@@ -1,4 +1,4 @@
-import type { CardHeaderInfo, Contributor, CreationIdea, LocationPoint } from '../types';
+import type { CardHeaderInfo, Character, Contributor, CreationIdea, LocationPoint } from '../types';
 import type { SyncLogger } from './logger';
 
 export type SyncJobKind = 'sync-data';
@@ -101,9 +101,10 @@ export interface SyncEnvironmentSettings {
   feishuCreationTableId?: string;
   feishuCreationViewId?: string;
   feishuCreationHeaderTableId?: string;
-  feishuOssTableId?: string;
   feishuLocationsTableId?: string;
   feishuContributorsTableId?: string;
+  feishuCharactersTableId?: string;
+  feishuCharactersViewId?: string;
   ossRegion?: string;
   ossBucket?: string;
   ossAccessKeyId?: string;
@@ -165,6 +166,7 @@ export interface SyncServices {
 
 export interface SyncTableOutputMap {
   locations: LocationCoords;
+  characters: Character[];
   stories: LocationPoint[];
   creation_board: CreationIdea[];
   creation_headers: CardHeaderInfo[];

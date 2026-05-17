@@ -1,8 +1,9 @@
-import type { Story } from '../../types';
+import type { Character, Story } from '../../types';
 import type { LocationCoords, TableSyncModule } from '../types';
 import { processAttachments } from '../shared/asset-processor';
 import { getText } from '../shared/field-reader';
 import { readLocationConfig } from '../writers/locations.writer';
+import { readCharactersData } from '../writers/characters.writer';
 import { writeContent } from '../writers/content.writer';
 
 function resolveLocationCoords(ctx: Parameters<TableSyncModule<'stories'>['run']>[0]) {
@@ -22,28 +23,26 @@ function resolveLocationCoords(ctx: Parameters<TableSyncModule<'stories'>['run']
   return readLocationConfig();
 }
 
-async function updateStoryRecordOssUrl(
+function resolveCharactersMap(
+  ctx: Parameters<TableSyncModule<'stories'>['run']>[0],
+): Map<string, Character> {
+  const list = ctx.outputs.characters ?? readCharactersData();
+  return new Map(list.map((c) => [c.id, c]));
+}
+
+async function updateStoryMainImageOssUrl(
   ctx: Parameters<TableSyncModule<'stories'>['run']>[0],
   recordId: string,
-  avatarOssUrl: string,
   mainImageOssUrl: string,
 ) {
-  if (!ctx.settings.feishuTableId) {
-    return;
-  }
-
-  const fields: Record<string, string> = {};
-  if (avatarOssUrl) fields['头像OSS_URL'] = avatarOssUrl;
-  if (mainImageOssUrl) fields['大图OSS_URL'] = mainImageOssUrl;
-
-  if (Object.keys(fields).length === 0) {
+  if (!ctx.settings.feishuTableId || !mainImageOssUrl) {
     return;
   }
 
   await ctx.services.feishuBitable.updateRecord(
     ctx.settings.feishuTableId,
     recordId,
-    fields,
+    { 大图OSS_URL: mainImageOssUrl },
   );
 }
 
@@ -85,13 +84,14 @@ function buildLocationsFromStories(coords: LocationCoords, storiesByLocation: Ma
 export const storiesModule: TableSyncModule<'stories'> = {
   key: 'stories',
   label: '首页故事',
-  dependsOn: ['locations'],
+  dependsOn: ['locations', 'characters'],
   async run(ctx) {
     if (!ctx.settings.feishuTableId) {
       throw new Error('缺少 FEISHU_TABLE_ID，无法同步 stories');
     }
 
     const coords = resolveLocationCoords(ctx);
+    const charactersMap = resolveCharactersMap(ctx);
     const records = await ctx.services.feishuBitable.searchRecords(
       ctx.settings.feishuTableId,
       {
@@ -115,36 +115,22 @@ export const storiesModule: TableSyncModule<'stories'> = {
             return { skipped: true };
           }
 
-          let avatarUrl = getText(fields['头像OSS_URL']);
+          const characterId = getText(fields['角色ID']);
+          const character = charactersMap.get(characterId);
+
           let mainImageUrl = getText(fields['大图OSS_URL']);
-          let hasNewUpload = false;
 
           if (ctx.includeAssets && ctx.services.oss.isConfigured) {
-            if (!avatarUrl && fields['头像']) {
-              const result = await processAttachments(ctx, fields['头像'], '头像', record.record_id);
-              warnings.push(...result.warnings);
-              const newUrl = result.urls[0] || '';
-              if (newUrl) {
-                avatarUrl = newUrl;
-                hasNewUpload = true;
-              }
-            }
-
             if (!mainImageUrl && fields['大图']) {
               const result = await processAttachments(ctx, fields['大图'], '大图', record.record_id);
               warnings.push(...result.warnings);
               const newUrl = result.urls[0] || '';
               if (newUrl) {
                 mainImageUrl = newUrl;
-                hasNewUpload = true;
+                await updateStoryMainImageOssUrl(ctx, record.record_id, mainImageUrl);
               }
             }
-
-            if (hasNewUpload) {
-              await updateStoryRecordOssUrl(ctx, record.record_id, avatarUrl, mainImageUrl);
-            }
           } else {
-            if (!avatarUrl) avatarUrl = getText(fields['头像URL']);
             if (!mainImageUrl) mainImageUrl = getText(fields['大图URL']);
           }
 
@@ -152,9 +138,9 @@ export const storiesModule: TableSyncModule<'stories'> = {
             skipped: false,
             story: {
               id: record.record_id,
-              characterId: getText(fields['角色ID']),
-              characterName: getText(fields['角色名']),
-              avatarUrl,
+              characterId,
+              characterName: character?.name ?? '',
+              avatarUrl: character?.avatarUrl ?? '',
               mainImageUrl,
               content: getText(fields['故事内容']),
               author: getText(fields['投稿人']),
