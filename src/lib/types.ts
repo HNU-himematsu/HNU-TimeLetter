@@ -3,12 +3,19 @@
  * 供全项目使用
  */
 
-// 故事实体 (对应飞书表格一行)
+// 角色实体 (对应飞书角色表一行)
+export interface Character {
+  id: string;             // 角色ID
+  name: string;           // 角色名称
+  avatarUrl: string;      // Q版头像 OSS URL
+}
+
+// 故事实体 (对应飞书展示表一行)
 export interface Story {
   id: string;
   characterId: string;
   characterName: string;
-  avatarUrl: string;      // Q版头像路径
+  avatarUrl: string;      // Q版头像路径（由角色表注入）
   mainImageUrl: string;   // 高清大图路径
   content: string;        // 故事文本
   author: string;

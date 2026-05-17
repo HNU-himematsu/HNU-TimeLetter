@@ -3,6 +3,7 @@ import type {
   SyncTableKey,
   TableSyncModule,
 } from './types';
+import { charactersModule } from './tables/characters.module';
 import { creationBoardModule } from './tables/creation-board.module';
 import { creationHeadersModule } from './tables/creation-headers.module';
 import { locationsModule } from './tables/locations.module';
@@ -13,6 +14,7 @@ export class SyncValidationError extends Error {}
 
 export const tableRegistry = {
   locations: locationsModule,
+  characters: charactersModule,
   stories: storiesModule,
   creation_headers: creationHeadersModule,
   creation_board: creationBoardModule,
