@@ -129,14 +129,24 @@ export function Footer() {
         <span className="text-base">
           Copyright © 2026 HIMEMATSU. All rights reserved.
         </span>
-        <a
-          href="https://beian.miit.gov.cn"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm hover:underline"
-        >
-          湘ICP备2024093060号-2
-        </a>
+        <div className="flex gap-4">
+          <a
+            href="https://beian.miit.gov.cn"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm hover:underline"
+          >
+            湘ICP备2024093060号-2
+          </a>
+          <a
+            href="https://icp.gov.moe/?keyword=20261958"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm hover:underline"
+          >
+            萌ICP备20261958号
+          </a>
+        </div>
       </div>
     </footer>
   );
