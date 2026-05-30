@@ -51,3 +51,7 @@ next-env.d.ts
 /runtime/
 /logs/
 *.tmp
+.codeboarding/.codeboardingignore
+.codeboarding/analysis.json.lock
+.codeboarding/static_analysis.lock
+.codeboarding/logs/wrapper-server.log
