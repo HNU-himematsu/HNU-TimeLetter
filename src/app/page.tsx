@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useAppStore } from '@/lib/store';
 import { useIsMobile } from '@/lib/hooks';
 import { useVirtualScroll } from '@/lib/useVirtualScroll';
+import { useLuge } from '@/lib/useLuge';
+import { useFooterSnap } from '@/lib/useFooterSnap';
 import { EnvelopeIntro } from '@/components/shared/EnvelopeIntro';
 import { ScrollSections } from '@/components/sections/ScrollSections';
 import { Footer } from '@/components/sections/Footer';
@@ -15,11 +17,16 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
 
   // 开屏入场动画期间禁止下滑：仅在入场动画播完且未处于跳转过渡时启用 Lenis 与自定义滑块
-  const lenis = useVirtualScroll(
-    mounted && !isMobile && isIntroReady && !isTransitioning && !isAnnouncementOpen,
-  );
-  const scrollbarEnabled =
+  const smoothEnabled =
     mounted && !isMobile && isIntroReady && !isTransitioning && !isAnnouncementOpen;
+  const lenis = useVirtualScroll(smoothEnabled);
+  const scrollbarEnabled = smoothEnabled;
+
+  // Luge 动效引擎：与 Lenis 相同的启用条件
+  useLuge(smoothEnabled);
+
+  // 页脚吸附：向下滚动到页脚区域时自动快速下滑揭露页脚
+  useFooterSnap(lenis, smoothEnabled);
 
   // mounted 标志确保客户端渲染完成后才启用 Lenis 与自定义滚动条
   useEffect(() => {
