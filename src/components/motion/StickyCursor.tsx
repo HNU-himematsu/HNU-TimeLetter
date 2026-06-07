@@ -5,6 +5,7 @@ import {
   motion,
   useMotionValue,
   useReducedMotion,
+  animate,
 } from 'framer-motion'
 import { useAppStore } from '@/lib/store'
 import { cn } from '@/lib/utils'
@@ -22,6 +23,31 @@ import { cn } from '@/lib/utils'
 const OUTER_DIVISOR = 12
 /** 内点 LERP 除数。较低值使内点对外圈有更快的追踪响应。 */
 const INNER_DIVISOR = 6
+
+// ---------------------------------------------------------------------------
+// 交互元素检测
+// ---------------------------------------------------------------------------
+
+/**
+ * 判断 DOM 元素或其祖先链中是否存在可交互元素。
+ *
+ * 检测规则（向上遍历直至 document.body）：
+ *  - 原生交互标签：button / a / input / select / textarea
+ *  - ARIA 角色：role="button"
+ *  - Tailwind 标记：class 中含 cursor-pointer
+ *  - 显式标记：data-cursor-interactive 属性
+ */
+function isInteractive(el: Element | null): boolean {
+  while (el && el !== document.body) {
+    const tag = el.tagName.toLowerCase()
+    if (tag === 'button' || tag === 'a' || tag === 'input' || tag === 'select' || tag === 'textarea') return true
+    if (el.getAttribute('role') === 'button') return true
+    if (el.classList.contains('cursor-pointer')) return true
+    if (el.hasAttribute('data-cursor-interactive')) return true
+    el = el.parentElement
+  }
+  return false
+}
 
 // ---------------------------------------------------------------------------
 // 组件
@@ -51,6 +77,12 @@ const INNER_DIVISOR = 6
  * 会截获 mousemove 事件，光标无法在其中追踪，因此直接隐藏
  * 而非定格在 iframe 边界。弹窗关闭后光标恢复渲染，RAF 插值
  * 循环始终运行，恢复时光标位置无跳变。
+ *
+ * 内点缩放联动：通过 document mouseover 事件自动检测光标
+ * 是否位于可交互元素（button / a / 含 cursor-pointer 类等）上方。
+ * 悬停时外圈放大至 110%（scale: 1.1）、内点缩小至 50%（scale: 0.5），
+ * 离开后均恢复 1.0，过渡时长 0.3s、Power2.easeInOut 缓动。
+ * 无需任何组件主动上报状态，StickyCursor 独立完成检测与动画。
  *
  * 光标初始化策略：组件挂载时无法获知鼠标位置（浏览器不提供
  * 同步读取 API），因此光标在首次 mousemove 之前不可见。首次
@@ -92,6 +124,12 @@ export function StickyCursor() {
   // ---- 内点插值后的展示坐标 ----
   const innerX = useMotionValue(0)
   const innerY = useMotionValue(0)
+
+  // ---- 外圈缩放因子（1.0 = 正常，1.1 = 悬停时放大至 110%） ----
+  const outerScale = useMotionValue(1)
+
+  // ---- 内点缩放因子（1.0 = 正常，0.5 = 悬停可交互元素时缩小至 50%） ----
+  const innerScale = useMotionValue(1)
 
   // ---- LERP 累加器（ref 持有，避免每帧读写 MotionValue 的类型开销） ----
   const lerpRef = useRef({
@@ -143,6 +181,31 @@ export function StickyCursor() {
     rafId = requestAnimationFrame(loop)
     return () => cancelAnimationFrame(rafId)
   }, [prefersReducedMotion, isTouchDevice, mouseX, mouseY, outerX, outerY, innerX, innerY])
+
+  // ---- 内点缩放：document mouseover 自动检测可交互元素 ----
+  useEffect(() => {
+    if (prefersReducedMotion || isTouchDevice) return
+
+    let currentHovering = false
+
+    function handleMouseOver(e: MouseEvent) {
+      const hovering = isInteractive(e.target as Element)
+      if (hovering !== currentHovering) {
+        currentHovering = hovering
+        void animate(outerScale, hovering ? 1 : 1, {
+          duration: 0.3,
+          ease: [0.45, 0.05, 0.55, 0.95], // Power2.easeInOut
+        })
+        void animate(innerScale, hovering ? 0.6 : 1, {
+          duration: 0.3,
+          ease: [0.45, 0.05, 0.55, 0.95], // Power2.easeInOut
+        })
+      }
+    }
+
+    document.addEventListener('mouseover', handleMouseOver, { passive: true })
+    return () => document.removeEventListener('mouseover', handleMouseOver)
+  }, [prefersReducedMotion, isTouchDevice, outerScale, innerScale])
 
   // ---- 光标初始化守卫（首次 mousemove 之前不可见） ----
   const [initialized, setInitialized] = useState(false)
@@ -208,6 +271,7 @@ export function StickyCursor() {
 
       {/*
         * 外圈轨道：4vw 直径圆形（clamp 44px~64px），LERP 除数 12。
+        * 悬停在可交互元素上时放大至 110%（scale: 1.1）。
         * backdrop-filter 对圆形区域内背景像素施加 feColorMatrix 滤镜。
         * 深色背景 → 白色圆；浅色背景 → 站色调暗色圆。
         */}
@@ -221,6 +285,7 @@ export function StickyCursor() {
           height: 'clamp(44px, 4vw, 64px)',
           x: outerX,
           y: outerY,
+          scale: outerScale,
           translateX: '-50%',
           translateY: '-50%',
           willChange: 'transform',
@@ -231,6 +296,7 @@ export function StickyCursor() {
 
       {/*
         * 内层精确点：1.3vw 直径圆形（clamp 14.3px~20.8px），与大圆比例固定，LERP 除数 6。
+        * 悬停在可交互元素上时缩小至 50%（scale: 0.5），通过 document mouseover 自动检测。
         */}
       <motion.div
         className={cn(
@@ -242,6 +308,7 @@ export function StickyCursor() {
           height: 'clamp(14.3px, 1.3vw, 20.8px)',
           x: innerX,
           y: innerY,
+          scale: innerScale,
           translateX: '-50%',
           translateY: '-50%',
           willChange: 'transform',
