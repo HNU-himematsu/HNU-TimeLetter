@@ -16,6 +16,7 @@ import {
   animate,
 } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { useAppStore } from '@/lib/store'
 
 // ---------------------------------------------------------------------------
 // 缓动函数常量
@@ -174,6 +175,9 @@ export function MagneticButton({
   // ---- 可访问性：prefers-reduced-motion ----
   const prefersReducedMotion = useReducedMotion()
 
+  // ---- 光标悬停联动 ----
+  const setCursorHovering = useAppStore((s) => s.setCursorHovering)
+
   // ---- 响应式磁吸断点守卫 ----
   const [magneticEnabled, setMagneticEnabled] = useState(true)
   useEffect(() => {
@@ -182,6 +186,13 @@ export function MagneticButton({
     window.addEventListener('resize', check, { passive: true })
     return () => window.removeEventListener('resize', check)
   }, [magneticBreakpoint])
+
+  // 组件卸载时重置光标悬停状态（防止在 hover 态下页面切换导致光标定格）
+  useEffect(() => {
+    return () => {
+      setCursorHovering(false)
+    }
+  }, [setCursorHovering])
 
   // 磁吸是否实际激活
   const isMagneticActive = !prefersReducedMotion && magneticEnabled
@@ -246,13 +257,14 @@ export function MagneticButton({
   // ---- mouseenter 处理器 ----
   const handleMouseEnter = useCallback(() => {
     setHoverState('hovered')
+    setCursorHovering(true)
 
     // 填充层滑入：76% → 0%
     void animate(fillY, '0%', {
       duration: 0.6,
       ease: POWER2_EASE_IN_OUT,
     })
-  }, [fillY])
+  }, [fillY, setCursorHovering])
 
   // ---- mouseleave 处理器 ----
   const handleMouseLeave = useCallback(() => {
@@ -295,7 +307,8 @@ export function MagneticButton({
     })
 
     setHoverState('leaving')
-  }, [isMagneticActive, mx, my, tx, ty, fillY])
+    setCursorHovering(false)
+  }, [isMagneticActive, mx, my, tx, ty, fillY, setCursorHovering])
 
   // ---- 派生状态 ----
   const isHovered = hoverState === 'hovered'

@@ -41,7 +41,10 @@ export function FeishuDocModal() {
   const isAnnouncementOpen = useAppStore((s) => s.isAnnouncementOpen);
   const closeAnnouncement = useAppStore((s) => s.closeAnnouncement);
 
-  const mountRef = useRef<HTMLDivElement>(null);
+  /** SDK 挂载容器 ref（指向 JSX 中的父容器，SDK 的原生挂载节点在其内部独立创建） */
+  const containerRef = useRef<HTMLDivElement>(null);
+  /** 由原生 DOM API 创建、脱离 React 渲染树的 SDK 挂载节点 */
+  const mountNodeRef = useRef<HTMLDivElement | null>(null);
   const instanceRef = useRef<DocComponentInstance | null>(null);
   const initVersionRef = useRef(0);
   /* 用于在异步 init 流程中判定当前请求是否已被新的关闭动作取消 */
@@ -81,7 +84,19 @@ export function FeishuDocModal() {
   }, [isAnnouncementOpen]);
 
   const ensureMounted = useCallback(async () => {
-    if (!mountRef.current) return;
+    const container = containerRef.current;
+    if (!container) return;
+
+    /* 首次调用时创建脱离 React 渲染树的原生挂载节点，避免 React DevTools
+       遍历飞书 SDK 创建的跨域 iframe 时触发 SecurityError */
+    if (!mountNodeRef.current) {
+      const node = document.createElement('div');
+      node.className = 'absolute inset-0';
+      container.appendChild(node);
+      mountNodeRef.current = node;
+    }
+    const mountNode = mountNodeRef.current;
+
     /* SDK 实例已就绪：直接复用，省掉重新建立 iframe 的开销 */
     if (instanceRef.current) {
       setStatus('ready');
@@ -112,7 +127,7 @@ export function FeishuDocModal() {
       /* 2. 让出主线程一个宏任务，确保 React 当前 commit/work 周期结束后
             再由飞书 SDK 操作 DOM，避免 "Should not already be working" 重入错误 */
       await new Promise<void>((resolve) => { setTimeout(resolve, 0); });
-      if (!mountRef.current || initVersion !== initVersionRef.current) return;
+      if (!mountNode || initVersion !== initVersionRef.current) return;
       /* 极端竞态：第二次调用已先创建实例 */
       if (instanceRef.current) {
         setStatus('ready');
@@ -122,7 +137,7 @@ export function FeishuDocModal() {
       /* 3. 创建组件：在构造器 config 字段传入功能配置（部分 SDK 版本在此生效） */
       const comp = new window.DocComponentSdk({
         src: announcementCfg.docUrl,
-        mount: mountRef.current,
+        mount: mountNode,
         auth: {
           signature: auth.signature,
           appId: auth.appId,
@@ -174,13 +189,17 @@ export function FeishuDocModal() {
     }
   }, [isAnnouncementOpen, ensureMounted]);
 
-  /* 组件最终卸载时销毁 SDK 实例（释放 iframe 与监听器） */
+  /* 组件最终卸载时销毁 SDK 实例（释放 iframe 与监听器）并清理原生挂载节点 */
   useEffect(() => {
     return () => {
       initVersionRef.current += 1;
       if (instanceRef.current) {
         instanceRef.current.destroy();
         instanceRef.current = null;
+      }
+      if (mountNodeRef.current) {
+        mountNodeRef.current.remove();
+        mountNodeRef.current = null;
       }
     };
   }, []);
@@ -283,8 +302,9 @@ export function FeishuDocModal() {
 
         {/* 文档挂载区 */}
         <div className="flex-1 overflow-hidden relative">
-          {/* SDK 挂载节点：常驻 DOM，复用 iframe */}
-          <div ref={mountRef} className="absolute inset-0" />
+          {/* SDK 挂载容器：挂载节点由原生 DOM API 在 ensureMounted 中创建，
+              脱离 React 渲染树，避免 React DevTools 遍历跨域 iframe */}
+          <div ref={containerRef} className="absolute inset-0" />
 
           {/* 加载态遮罩 */}
           {status === 'loading' && (

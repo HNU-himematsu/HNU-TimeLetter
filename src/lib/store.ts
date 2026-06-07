@@ -26,6 +26,10 @@ interface AppState {
   openAnnouncement: () => void;
   closeAnnouncement: () => void;
 
+  // 光标悬停可交互元素状态（驱动 StickyCursor 内点缩放动效）
+  cursorHovering: boolean;
+  setCursorHovering: (hovering: boolean) => void;
+
   // [开发工具] 地图坐标显示：在地图页左下角实时显示鼠标所在 SVG 百分比坐标
   showMapCoordinates: boolean;
   setShowMapCoordinates: (show: boolean) => void;
@@ -44,6 +48,9 @@ export const useAppStore = create<AppState>((set) => ({
   isAnnouncementOpen: false,
   openAnnouncement: () => set({ isAnnouncementOpen: true }),
   closeAnnouncement: () => set({ isAnnouncementOpen: false }),
+
+  cursorHovering: false,
+  setCursorHovering: (hovering) => set({ cursorHovering: hovering }),
 
   showMapCoordinates: readMapCoordsFlag(),
   setShowMapCoordinates: (show) => {
